@@ -1,0 +1,410 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "SnapRender Screenshot API",
+    "description": "Capture screenshots of any website as PNG, JPEG, WebP, or PDF. To take a screenshot, call GET /v1/screenshot with a url parameter and your API key in the X-API-Key header. Set response_type=json to receive a base64 data URI (recommended for AI agents). Features: device emulation, dark mode, ad blocking, and cookie banner removal. Free tier: 50 screenshots/month, no credit card required.",
+    "version": "1.0.0",
+    "contact": {
+      "name": "SnapRender Support",
+      "url": "https://snap-render.com",
+      "email": "support@snap-render.com"
+    }
+  },
+  "servers": [
+    {
+      "url": "https://app.snap-render.com",
+      "description": "Production"
+    }
+  ],
+  "paths": {
+    "/v1/screenshot": {
+      "get": {
+        "operationId": "takeScreenshot",
+        "summary": "Capture a screenshot of a website",
+        "description": "Takes a screenshot of any URL and returns it as a binary image or JSON with base64 data URI. Set response_type=json for AI agent integrations. Supports device emulation, dark mode, ad blocking, cookie banner removal, and caching.",
+        "x-openai-isConsequential": false,
+        "parameters": [
+          {
+            "name": "url",
+            "in": "query",
+            "required": true,
+            "schema": { "type": "string", "format": "uri" },
+            "description": "The URL to capture (must be http or https)",
+            "example": "https://example.com"
+          },
+          {
+            "name": "format",
+            "in": "query",
+            "schema": { "type": "string", "enum": ["png", "jpeg", "webp", "pdf"], "default": "png" },
+            "description": "Output image format. Use png for lossless quality, jpeg/webp for smaller files, pdf for documents.",
+            "example": "png"
+          },
+          {
+            "name": "width",
+            "in": "query",
+            "schema": { "type": "integer", "minimum": 320, "maximum": 3840, "default": 1280 },
+            "description": "Viewport width in pixels (320-3840)",
+            "example": 1280
+          },
+          {
+            "name": "height",
+            "in": "query",
+            "schema": { "type": "integer", "minimum": 200, "maximum": 10000, "default": 800 },
+            "description": "Viewport height in pixels (200-10000)",
+            "example": 800
+          },
+          {
+            "name": "full_page",
+            "in": "query",
+            "schema": { "type": "string", "enum": ["true", "false"], "default": "false" },
+            "description": "Capture the entire scrollable page instead of just the viewport",
+            "example": "false"
+          },
+          {
+            "name": "quality",
+            "in": "query",
+            "schema": { "type": "integer", "minimum": 1, "maximum": 100, "default": 90 },
+            "description": "Image quality for JPEG and WebP (1-100). Ignored for PNG and PDF.",
+            "example": 90
+          },
+          {
+            "name": "delay",
+            "in": "query",
+            "schema": { "type": "integer", "minimum": 0, "maximum": 10000, "default": 0 },
+            "description": "Milliseconds to wait after page load before capturing. Useful for pages with animations or lazy-loaded content.",
+            "example": 0
+          },
+          {
+            "name": "dark_mode",
+            "in": "query",
+            "schema": { "type": "string", "enum": ["true", "false"], "default": "false" },
+            "description": "Emulate prefers-color-scheme: dark CSS media feature",
+            "example": "false"
+          },
+          {
+            "name": "block_ads",
+            "in": "query",
+            "schema": { "type": "string", "enum": ["true", "false"], "default": "true" },
+            "description": "Block advertisements and trackers for cleaner screenshots",
+            "example": "true"
+          },
+          {
+            "name": "block_cookie_banners",
+            "in": "query",
+            "schema": { "type": "string", "enum": ["true", "false"], "default": "true" },
+            "description": "Remove cookie consent banners and GDPR overlays",
+            "example": "true"
+          },
+          {
+            "name": "device",
+            "in": "query",
+            "schema": { "type": "string", "enum": ["iphone_14", "iphone_15_pro", "pixel_7", "ipad_pro", "macbook_pro"] },
+            "description": "Device preset for mobile/tablet emulation. Sets viewport size, user agent, and device scale factor.",
+            "example": "iphone_15_pro"
+          },
+          {
+            "name": "hide_selectors",
+            "in": "query",
+            "schema": { "type": "string" },
+            "description": "Comma-separated CSS selectors to hide before capturing (e.g., '.banner,.popup')",
+            "example": ".cookie-notice,.newsletter-popup"
+          },
+          {
+            "name": "click_selector",
+            "in": "query",
+            "schema": { "type": "string" },
+            "description": "CSS selector to click before capturing (e.g., to dismiss a modal or expand content)",
+            "example": "#accept-cookies"
+          },
+          {
+            "name": "user_agent",
+            "in": "query",
+            "schema": { "type": "string" },
+            "description": "Custom user agent string to use for the request"
+          },
+          {
+            "name": "cache",
+            "in": "query",
+            "schema": { "type": "string", "enum": ["true", "false"], "default": "true" },
+            "description": "Use cached result if available. Set to false to force a fresh capture.",
+            "example": "true"
+          },
+          {
+            "name": "cache_ttl",
+            "in": "query",
+            "schema": { "type": "integer", "minimum": 0, "maximum": 2592000, "default": 86400 },
+            "description": "Cache time-to-live in seconds (max depends on plan). Default: 86400 (24 hours).",
+            "example": 86400
+          },
+          {
+            "name": "response_type",
+            "in": "query",
+            "schema": { "type": "string", "enum": ["binary", "json"], "default": "binary" },
+            "description": "Response format. 'binary' returns raw image bytes with Content-Type header (default). 'json' returns a JSON object with a base64 data URI in the 'image' field — recommended for AI agents, ChatGPT Actions, and programmatic integrations.",
+            "example": "json"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Screenshot captured successfully",
+            "headers": {
+              "X-Cache": { "schema": { "type": "string", "enum": ["HIT", "MISS"] }, "description": "Whether the result was served from cache" },
+              "X-Response-Time": { "schema": { "type": "string" }, "description": "Total response time (e.g., '1234ms')" },
+              "X-Remaining-Credits": { "schema": { "type": "string" }, "description": "Remaining screenshots this billing period" },
+              "X-Request-Id": { "schema": { "type": "string" }, "description": "Unique request identifier for support" }
+            },
+            "content": {
+              "image/png": { "schema": { "type": "string", "format": "binary" } },
+              "image/jpeg": { "schema": { "type": "string", "format": "binary" } },
+              "image/webp": { "schema": { "type": "string", "format": "binary" } },
+              "application/pdf": { "schema": { "type": "string", "format": "binary" } },
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "url": { "type": "string", "description": "The captured URL" },
+                    "format": { "type": "string", "description": "Image format used" },
+                    "width": { "type": "integer", "description": "Viewport width" },
+                    "height": { "type": "integer", "description": "Viewport height" },
+                    "image": { "type": "string", "description": "Base64 data URI of the screenshot (e.g., data:image/png;base64,...)" },
+                    "size": { "type": "integer", "description": "Image size in bytes" },
+                    "cache": { "type": "string", "enum": ["HIT", "MISS"], "description": "Cache status" },
+                    "responseTime": { "type": "string", "description": "Render time (e.g., '1234ms')" },
+                    "remainingCredits": { "type": "integer", "description": "Remaining screenshots this billing period" }
+                  }
+                },
+                "example": {
+                  "url": "https://example.com",
+                  "format": "png",
+                  "width": 1280,
+                  "height": 800,
+                  "image": "data:image/png;base64,iVBORw0KGgo...",
+                  "size": 45320,
+                  "cache": "MISS",
+                  "responseTime": "1234ms",
+                  "remainingCredits": 49
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid parameters or blocked URL",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Error" }
+              }
+            }
+          },
+          "401": {
+            "description": "Invalid or missing API key",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Error" }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limited or quota exceeded",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Error" }
+              }
+            }
+          }
+        },
+        "security": [{ "apiKey": [] }]
+      }
+    },
+    "/v1/screenshot/info": {
+      "get": {
+        "operationId": "getScreenshotInfo",
+        "summary": "Check screenshot cache status",
+        "description": "Check if a screenshot is cached and get metadata without capturing. Does not count against quota. Useful for checking if a URL has been recently captured.",
+        "x-openai-isConsequential": false,
+        "parameters": [
+          {
+            "name": "url",
+            "in": "query",
+            "required": true,
+            "schema": { "type": "string", "format": "uri" },
+            "description": "The URL to check cache status for",
+            "example": "https://example.com"
+          },
+          {
+            "name": "format",
+            "in": "query",
+            "schema": { "type": "string", "enum": ["png", "jpeg", "webp", "pdf"], "default": "png" },
+            "description": "Output format to check (cache keys are format-specific)",
+            "example": "png"
+          },
+          {
+            "name": "width",
+            "in": "query",
+            "schema": { "type": "integer", "default": 1280 },
+            "description": "Viewport width in pixels (cache keys are resolution-specific)",
+            "example": 1280
+          },
+          {
+            "name": "height",
+            "in": "query",
+            "schema": { "type": "integer", "default": 800 },
+            "description": "Viewport height in pixels (cache keys are resolution-specific)",
+            "example": 800
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Cache information",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "url": { "type": "string" },
+                    "cached": { "type": "boolean" },
+                    "cachedAt": { "type": "string", "format": "date-time" },
+                    "expiresAt": { "type": "string", "format": "date-time" },
+                    "size": { "type": "integer" }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [{ "apiKey": [] }]
+      }
+    },
+    "/v1/usage": {
+      "get": {
+        "operationId": "getUsage",
+        "summary": "Get current month usage",
+        "description": "Returns screenshot usage statistics for the current billing period including plan name, period dates, and remaining credits.",
+        "x-openai-isConsequential": false,
+        "responses": {
+          "200": {
+            "description": "Usage statistics",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Usage" }
+              }
+            }
+          }
+        },
+        "security": [{ "apiKey": [] }]
+      }
+    },
+    "/v1/usage/daily": {
+      "get": {
+        "operationId": "getDailyUsage",
+        "summary": "Get daily usage breakdown",
+        "description": "Returns daily screenshot counts for the past N days. Useful for monitoring usage trends and building dashboards.",
+        "x-openai-isConsequential": false,
+        "parameters": [
+          {
+            "name": "days",
+            "in": "query",
+            "schema": { "type": "integer", "minimum": 1, "maximum": 90, "default": 30 },
+            "description": "Number of days to look back (1-90)",
+            "example": 30
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Daily usage data",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "days": { "type": "integer" },
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "date": { "type": "string", "format": "date" },
+                          "count": { "type": "integer" }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [{ "apiKey": [] }]
+      }
+    },
+    "/health": {
+      "get": {
+        "operationId": "healthCheck",
+        "summary": "Health check",
+        "description": "Check API health including Chromium, Redis, and database connectivity. No authentication required.",
+        "responses": {
+          "200": {
+            "description": "Service is healthy",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": { "type": "string" },
+                    "checks": { "type": "object" }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": []
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "apiKey": {
+        "type": "apiKey",
+        "in": "header",
+        "name": "X-API-Key",
+        "description": "API key (starts with sk_live_). Get one free at https://app.snap-render.com/auth/signup"
+      }
+    },
+    "schemas": {
+      "Error": {
+        "type": "object",
+        "properties": {
+          "error": {
+            "type": "object",
+            "properties": {
+              "code": { "type": "string", "description": "Error code (e.g., INVALID_URL, RATE_LIMITED, QUOTA_EXCEEDED)" },
+              "message": { "type": "string", "description": "Human-readable error description" },
+              "status": { "type": "integer", "description": "HTTP status code" }
+            }
+          }
+        }
+      },
+      "Usage": {
+        "type": "object",
+        "properties": {
+          "plan": { "type": "string", "description": "Current plan name (free, growth, business, scale)" },
+          "period": {
+            "type": "object",
+            "properties": {
+              "start": { "type": "string", "format": "date-time" },
+              "end": { "type": "string", "format": "date-time" }
+            }
+          },
+          "usage": {
+            "type": "object",
+            "properties": {
+              "screenshots_used": { "type": "integer", "description": "Screenshots used this period" },
+              "screenshots_limit": { "type": "integer", "description": "Monthly screenshot limit for current plan" },
+              "screenshots_remaining": { "type": "integer", "description": "Screenshots remaining this period" }
+            }
+          }
+        }
+      }
+    }
+  }
+}

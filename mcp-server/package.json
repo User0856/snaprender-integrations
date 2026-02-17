@@ -1,0 +1,35 @@
+{
+  "name": "snaprender-mcp",
+  "version": "1.0.4",
+  "mcpName": "io.github.User0856/snaprender",
+  "description": "MCP server for SnapRender Screenshot API — lets AI agents capture website screenshots",
+  "type": "module",
+  "main": "dist/index.js",
+  "bin": {
+    "snaprender-mcp": "dist/index.js"
+  },
+  "files": ["dist", "README.md"],
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "prepublishOnly": "npm run build"
+  },
+  "keywords": ["mcp", "screenshot", "api", "snaprender", "claude", "ai", "agent", "model-context-protocol"],
+  "license": "MIT",
+  "homepage": "https://snap-render.com",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/User0856/snaprender-integrations",
+    "directory": "mcp-server"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.12.1"
+  },
+  "devDependencies": {
+    "typescript": "^5.7.0",
+    "@types/node": "^22.0.0"
+  }
+}

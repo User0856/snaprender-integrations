@@ -1,0 +1,397 @@
+{
+	"info": {
+		"name": "SnapRender API",
+		"description": "Screenshot any website via API. Supports PNG, JPEG, WebP, and PDF output with device emulation, dark mode, ad blocking, and cookie banner removal.\n\n**Base URL:** `https://app.snap-render.com`\n\n**Authentication:** Pass your API key in the `X-API-Key` header.\n\n**Get a free API key:** https://app.snap-render.com/auth/signup (50 free screenshots/month, no credit card required)\n\n**Documentation:** https://app.snap-render.com\n\n**SDKs:**\n- Node.js: `npm install snaprender`\n- Python: `pip install snaprender`",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"auth": {
+		"type": "apikey",
+		"apikey": [
+			{
+				"key": "key",
+				"value": "X-API-Key",
+				"type": "string"
+			},
+			{
+				"key": "value",
+				"value": "{{api_key}}",
+				"type": "string"
+			},
+			{
+				"key": "in",
+				"value": "header",
+				"type": "string"
+			}
+		]
+	},
+	"variable": [
+		{
+			"key": "base_url",
+			"value": "https://app.snap-render.com",
+			"type": "string"
+		},
+		{
+			"key": "api_key",
+			"value": "YOUR_API_KEY",
+			"type": "string"
+		}
+	],
+	"item": [
+		{
+			"name": "Screenshot",
+			"item": [
+				{
+					"name": "Take Screenshot (PNG)",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/v1/screenshot?url=https://example.com&format=png&width=1280&height=800",
+							"host": ["{{base_url}}"],
+							"path": ["v1", "screenshot"],
+							"query": [
+								{
+									"key": "url",
+									"value": "https://example.com",
+									"description": "Required. The URL to capture."
+								},
+								{
+									"key": "format",
+									"value": "png",
+									"description": "Output format: png, jpeg, webp, or pdf. Default: png."
+								},
+								{
+									"key": "width",
+									"value": "1280",
+									"description": "Viewport width in pixels (320-3840). Default: 1280."
+								},
+								{
+									"key": "height",
+									"value": "800",
+									"description": "Viewport height in pixels (200-10000). Default: 800."
+								}
+							]
+						},
+						"description": "Capture a basic PNG screenshot of a website."
+					}
+				},
+				{
+					"name": "Take Screenshot (WebP)",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/v1/screenshot?url=https://example.com&format=webp&quality=85&width=1920&height=1080",
+							"host": ["{{base_url}}"],
+							"path": ["v1", "screenshot"],
+							"query": [
+								{
+									"key": "url",
+									"value": "https://example.com"
+								},
+								{
+									"key": "format",
+									"value": "webp"
+								},
+								{
+									"key": "quality",
+									"value": "85",
+									"description": "Image quality 1-100. Default: 90."
+								},
+								{
+									"key": "width",
+									"value": "1920"
+								},
+								{
+									"key": "height",
+									"value": "1080"
+								}
+							]
+						},
+						"description": "Capture a WebP screenshot with custom quality. WebP produces 25-50% smaller files than PNG."
+					}
+				},
+				{
+					"name": "Take Screenshot (PDF)",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/v1/screenshot?url=https://example.com&format=pdf",
+							"host": ["{{base_url}}"],
+							"path": ["v1", "screenshot"],
+							"query": [
+								{
+									"key": "url",
+									"value": "https://example.com"
+								},
+								{
+									"key": "format",
+									"value": "pdf"
+								}
+							]
+						},
+						"description": "Generate a PDF document of a web page."
+					}
+				},
+				{
+					"name": "Full-Page Screenshot",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/v1/screenshot?url=https://example.com&format=png&full_page=true",
+							"host": ["{{base_url}}"],
+							"path": ["v1", "screenshot"],
+							"query": [
+								{
+									"key": "url",
+									"value": "https://example.com"
+								},
+								{
+									"key": "format",
+									"value": "png"
+								},
+								{
+									"key": "full_page",
+									"value": "true",
+									"description": "Capture the entire scrollable page. Default: false."
+								}
+							]
+						},
+						"description": "Capture the entire scrollable page, not just the visible viewport."
+					}
+				},
+				{
+					"name": "Dark Mode Screenshot",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/v1/screenshot?url=https://example.com&format=png&dark_mode=true",
+							"host": ["{{base_url}}"],
+							"path": ["v1", "screenshot"],
+							"query": [
+								{
+									"key": "url",
+									"value": "https://example.com"
+								},
+								{
+									"key": "format",
+									"value": "png"
+								},
+								{
+									"key": "dark_mode",
+									"value": "true",
+									"description": "Emulate prefers-color-scheme: dark. Default: false."
+								}
+							]
+						},
+						"description": "Capture a page in dark mode (for sites that support prefers-color-scheme: dark)."
+					}
+				},
+				{
+					"name": "Mobile Screenshot (iPhone 15 Pro)",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/v1/screenshot?url=https://example.com&format=png&device=iphone_15_pro",
+							"host": ["{{base_url}}"],
+							"path": ["v1", "screenshot"],
+							"query": [
+								{
+									"key": "url",
+									"value": "https://example.com"
+								},
+								{
+									"key": "format",
+									"value": "png"
+								},
+								{
+									"key": "device",
+									"value": "iphone_15_pro",
+									"description": "Device preset: iphone_14, iphone_15_pro, pixel_7, ipad_pro, macbook_pro."
+								}
+							]
+						},
+						"description": "Capture a page as it appears on an iPhone 15 Pro (393x852, 3x DPR, mobile user agent)."
+					}
+				},
+				{
+					"name": "Screenshot with All Options",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/v1/screenshot?url=https://example.com&format=webp&width=1920&height=1080&quality=90&full_page=false&dark_mode=false&block_ads=true&block_cookie_banners=true&delay=0&cache=true&cache_ttl=86400&response_type=binary",
+							"host": ["{{base_url}}"],
+							"path": ["v1", "screenshot"],
+							"query": [
+								{
+									"key": "url",
+									"value": "https://example.com",
+									"description": "Required. URL to capture."
+								},
+								{
+									"key": "format",
+									"value": "webp",
+									"description": "png, jpeg, webp, or pdf. Default: png."
+								},
+								{
+									"key": "width",
+									"value": "1920",
+									"description": "Viewport width 320-3840. Default: 1280."
+								},
+								{
+									"key": "height",
+									"value": "1080",
+									"description": "Viewport height 200-10000. Default: 800."
+								},
+								{
+									"key": "quality",
+									"value": "90",
+									"description": "Image quality 1-100. Default: 90."
+								},
+								{
+									"key": "full_page",
+									"value": "false",
+									"description": "Capture full scrollable page. Default: false."
+								},
+								{
+									"key": "dark_mode",
+									"value": "false",
+									"description": "Dark mode emulation. Default: false."
+								},
+								{
+									"key": "block_ads",
+									"value": "true",
+									"description": "Block ads and trackers. Default: true."
+								},
+								{
+									"key": "block_cookie_banners",
+									"value": "true",
+									"description": "Remove cookie consent banners. Default: true."
+								},
+								{
+									"key": "delay",
+									"value": "0",
+									"description": "Wait ms after page load before capture (0-10000). Default: 0."
+								},
+								{
+									"key": "cache",
+									"value": "true",
+									"description": "Enable R2 caching. Default: true."
+								},
+								{
+									"key": "cache_ttl",
+									"value": "86400",
+									"description": "Cache TTL in seconds (clamped to plan max). Default: 86400."
+								},
+								{
+									"key": "response_type",
+									"value": "binary",
+									"description": "Response format: binary (raw image) or json (base64 data URI with metadata). Default: binary."
+								}
+							]
+						},
+						"description": "Screenshot with every available parameter. Modify as needed."
+					}
+				},
+				{
+					"name": "Screenshot Info (Cache Check)",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/v1/screenshot/info?url=https://example.com&format=png&width=1280&height=800",
+							"host": ["{{base_url}}"],
+							"path": ["v1", "screenshot", "info"],
+							"query": [
+								{
+									"key": "url",
+									"value": "https://example.com"
+								},
+								{
+									"key": "format",
+									"value": "png"
+								},
+								{
+									"key": "width",
+									"value": "1280"
+								},
+								{
+									"key": "height",
+									"value": "800"
+								}
+							]
+						},
+						"description": "Check if a screenshot is cached and validate parameters without capturing. Does not count against quota."
+					}
+				}
+			],
+			"description": "Capture website screenshots in PNG, JPEG, WebP, or PDF format."
+		},
+		{
+			"name": "Usage",
+			"item": [
+				{
+					"name": "Get Current Usage",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/v1/usage",
+							"host": ["{{base_url}}"],
+							"path": ["v1", "usage"]
+						},
+						"description": "Get current month's usage statistics including screenshots used, limit, and remaining."
+					}
+				},
+				{
+					"name": "Get Daily Usage",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/v1/usage/daily?days=30",
+							"host": ["{{base_url}}"],
+							"path": ["v1", "usage", "daily"],
+							"query": [
+								{
+									"key": "days",
+									"value": "30",
+									"description": "Number of days to look back (1-90). Default: 30."
+								}
+							]
+						},
+						"description": "Get daily usage breakdown for the past N days. Useful for building usage charts."
+					}
+				}
+			],
+			"description": "Check your API usage and quota."
+		},
+		{
+			"name": "Health",
+			"item": [
+				{
+					"name": "Health Check",
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/health",
+							"host": ["{{base_url}}"],
+							"path": ["health"]
+						},
+						"description": "Check API health status including Chromium, Redis, and PostgreSQL connectivity. No authentication required."
+					}
+				}
+			],
+			"description": "API health and status checks."
+		}
+	]
+}
