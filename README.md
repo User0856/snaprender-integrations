@@ -8,26 +8,55 @@
 
 Official integrations for [SnapRender Screenshot API](https://snap-render.com) — capture screenshots of any website as PNG, JPEG, WebP, or PDF.
 
-## Published Packages
+## Remote MCP Server
 
-| Package | Install | Links |
-|---------|---------|-------|
-| **MCP Server** | `npx snaprender-mcp` | [npm](https://www.npmjs.com/package/snaprender-mcp) |
-| **Node.js SDK** | `npm install snaprender` | [npm](https://www.npmjs.com/package/snaprender) |
-| **Python SDK** | `pip install snaprender` | [PyPI](https://pypi.org/project/snaprender/) |
+SnapRender runs a hosted MCP server — connect from any MCP client with zero install:
 
-## What's Inside
+```
+https://app.snap-render.com/mcp
+```
 
-| Integration | Description | Setup Time |
-|------------|-------------|------------|
-| [MCP Server](./mcp-server/) | Model Context Protocol server for Claude Desktop & Claude Code | 30 sec |
-| [OpenClaw Skill](./openclaw/) | Skill file for OpenClaw AI agent | 5 min |
-| [ChatGPT Actions](./chatgpt-actions/) | OpenAPI spec for Custom GPTs and OpenAI function calling | 5 min |
-| [Postman Collection](./postman/) | Pre-built API requests for Postman | 1 min |
+- **Transport:** [Streamable HTTP](https://modelcontextprotocol.io/specification/2025-03-26/basic/transports#streamable-http) (MCP spec 2025-03-26)
+- **Auth:** `X-API-Key` header or `Authorization: Bearer` header
+- **Tools:** `take_screenshot`, `check_screenshot_cache`, `get_usage`
+- **Prompts:** `screenshot_website`, `compare_devices`
 
-## Quick Start
+### Claude Desktop (remote — recommended)
 
-### MCP Server (Claude) — Local
+```json
+{
+  "mcpServers": {
+    "snaprender": {
+      "type": "streamable-http",
+      "url": "https://app.snap-render.com/mcp",
+      "headers": {
+        "Authorization": "Bearer sk_live_your_key_here"
+      }
+    }
+  }
+}
+```
+
+### Any MCP client (curl)
+
+```bash
+# Initialize a session
+curl -X POST https://app.snap-render.com/mcp \
+  -H "Content-Type: application/json" \
+  -H "Accept: application/json, text/event-stream" \
+  -H "X-API-Key: sk_live_your_key_here" \
+  -d '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2025-03-26","capabilities":{},"clientInfo":{"name":"test","version":"1.0"}}}'
+```
+
+The server returns an `Mcp-Session-Id` header — include it in subsequent requests to reuse the session.
+
+### Smithery
+
+Install via [Smithery](https://smithery.ai/server/snaprender/snaprender) for automatic setup with any MCP client.
+
+## Local MCP Server (npm)
+
+If you prefer running locally via stdio transport:
 
 ```json
 {
@@ -43,17 +72,64 @@ Official integrations for [SnapRender Screenshot API](https://snap-render.com) �
 }
 ```
 
-### MCP Server — Remote (no install)
+See [mcp-server/](./mcp-server/) for full documentation.
 
-Connect any MCP client directly to:
+### Remote vs Local
 
-```
-https://app.snap-render.com/mcp
-```
+| | Remote (hosted) | Local (`npx`) |
+|---|---|---|
+| **Install** | None — just an HTTPS URL | Requires Node.js + npx |
+| **Transport** | Streamable HTTP | stdio |
+| **Use case** | Any MCP client, Smithery, web apps | Claude Desktop, Claude Code |
 
-Pass your API key via `Authorization: Bearer sk_live_...` or `X-API-Key` header. Uses Streamable HTTP transport (MCP spec 2025-03-26).
+## MCP Tools
 
-### SDKs
+### `take_screenshot`
+
+Capture a screenshot of any website. Returns the image as PNG, JPEG, WebP, or PDF.
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `url` | string | Yes | URL to capture (http:// or https://) |
+| `format` | string | No | `png`, `jpeg`, `webp`, or `pdf` (default: `png`) |
+| `width` | integer | No | Viewport width 320-3840 (default: 1280) |
+| `height` | integer | No | Viewport height 200-10000 (default: 800) |
+| `full_page` | boolean | No | Capture entire scrollable page |
+| `device` | string | No | `iphone_14`, `iphone_15_pro`, `pixel_7`, `ipad_pro`, `macbook_pro` |
+| `dark_mode` | boolean | No | Enable dark mode |
+| `block_ads` | boolean | No | Block ads (default: true) |
+| `block_cookie_banners` | boolean | No | Remove cookie banners (default: true) |
+| `quality` | integer | No | JPEG/WebP quality 1-100 (default: 90) |
+| `delay` | integer | No | Wait ms after page load (default: 0) |
+| `hide_selectors` | string | No | Comma-separated CSS selectors to hide |
+| `click_selector` | string | No | CSS selector to click before capture |
+
+### `check_screenshot_cache`
+
+Check if a screenshot is cached without capturing. Does not count against quota.
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `url` | string | Yes | URL to check |
+| `format` | string | No | Output format (default: `png`) |
+
+### `get_usage`
+
+Get screenshot usage statistics.
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `month` | string | No | Month in `YYYY-MM` format (default: current month) |
+
+## Other Integrations
+
+| Integration | Description | Setup Time |
+|------------|-------------|------------|
+| [OpenClaw Skill](./openclaw/) | Skill file for OpenClaw AI agent | 5 min |
+| [ChatGPT Actions](./chatgpt-actions/) | OpenAPI spec for Custom GPTs and OpenAI function calling | 5 min |
+| [Postman Collection](./postman/) | Pre-built API requests for Postman | 1 min |
+
+## SDKs
 
 ```bash
 # Node.js
@@ -63,7 +139,7 @@ npm install snaprender
 pip install snaprender
 ```
 
-### Direct API
+## Direct API
 
 ```bash
 curl "https://app.snap-render.com/v1/screenshot?url=https://example.com" \
@@ -78,9 +154,11 @@ Sign up free at [app.snap-render.com](https://app.snap-render.com/auth/signup) �
 ## Links
 
 - [Documentation](https://snap-render.com)
+- [Remote MCP Server](https://app.snap-render.com/mcp) — Streamable HTTP endpoint
+- [MCP Server on npm](https://www.npmjs.com/package/snaprender-mcp) (`npx snaprender-mcp`)
+- [MCP Server on Smithery](https://smithery.ai/server/snaprender/snaprender)
 - [Node.js SDK](https://www.npmjs.com/package/snaprender) (`npm install snaprender`)
 - [Python SDK](https://pypi.org/project/snaprender/) (`pip install snaprender`)
-- [MCP Server](https://www.npmjs.com/package/snaprender-mcp) (`npx snaprender-mcp`)
 - [OpenAPI Spec](./chatgpt-actions/openapi.json)
 - [Postman Collection](./postman/snaprender-postman-collection.json)
 

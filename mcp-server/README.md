@@ -48,13 +48,13 @@ Add to your project's `.mcp.json`:
 
 ### Remote Mode (no install)
 
-Connect any MCP client directly to the hosted endpoint — no `npx` or local install required:
+Connect any MCP client directly to the hosted server — zero dependencies, works instantly:
 
 ```
 https://app.snap-render.com/mcp
 ```
 
-Pass your API key via `Authorization: Bearer sk_live_...` or `X-API-Key` header. Uses Streamable HTTP transport ([MCP spec 2025-03-26](https://modelcontextprotocol.io/specification/2025-03-26/basic/transports#streamable-http)).
+Uses [Streamable HTTP transport](https://modelcontextprotocol.io/specification/2025-03-26/basic/transports#streamable-http) (MCP spec 2025-03-26). Authenticate via `Authorization: Bearer sk_live_...` or `X-API-Key` header.
 
 #### Claude Desktop (remote)
 
@@ -71,6 +71,28 @@ Pass your API key via `Authorization: Bearer sk_live_...` or `X-API-Key` header.
   }
 }
 ```
+
+#### Any MCP client (curl example)
+
+```bash
+# Initialize a session
+curl -X POST https://app.snap-render.com/mcp \
+  -H "Content-Type: application/json" \
+  -H "Accept: application/json, text/event-stream" \
+  -H "X-API-Key: sk_live_your_key_here" \
+  -d '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2025-03-26","capabilities":{},"clientInfo":{"name":"test","version":"1.0"}}}'
+```
+
+The server returns an `Mcp-Session-Id` header — pass it in subsequent requests to reuse the session.
+
+### Local vs Remote
+
+| | Local (`npx`) | Remote (hosted) |
+|---|---|---|
+| **Install** | Requires Node.js + npx | None — just an HTTPS URL |
+| **Transport** | stdio | Streamable HTTP |
+| **Latency** | Slightly lower (local process) | Slightly higher (network hop) |
+| **Use case** | Claude Desktop, Claude Code | Any MCP client, Smithery, web apps |
 
 ## Tools
 
@@ -106,7 +128,11 @@ Check if a screenshot is cached without capturing.
 
 ### `get_usage`
 
-Get current month's usage statistics. No parameters required.
+Get screenshot usage statistics.
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `month` | string | No | Month in `YYYY-MM` format (default: current month) |
 
 ## Get an API Key
 
