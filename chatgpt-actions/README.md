@@ -27,3 +27,10 @@ https://app.snap-render.com/.well-known/ai-plugin.json
 ## Get an API Key
 
 Sign up free at [app.snap-render.com](https://app.snap-render.com/auth/signup) — 50 screenshots/month, no credit card required.
+
+## Related
+
+- [MCP Server](https://www.npmjs.com/package/snaprender-mcp) — For Claude Desktop & Claude Code
+- [Node.js SDK](https://www.npmjs.com/package/snaprender) — `npm install snaprender`
+- [Python SDK](https://pypi.org/project/snaprender/) — `pip install snaprender`
+- [OpenClaw Skill](../openclaw/) — Screenshot skill for OpenClaw agents

@@ -45,3 +45,10 @@ OpenClaw Skills are markdown files that teach the agent how to use an API. The a
 ## Get an API Key
 
 Sign up free at [app.snap-render.com](https://app.snap-render.com/auth/signup) — 50 screenshots/month, no credit card required.
+
+## Related
+
+- [MCP Server](https://www.npmjs.com/package/snaprender-mcp) — For Claude Desktop & Claude Code
+- [Node.js SDK](https://www.npmjs.com/package/snaprender) — `npm install snaprender`
+- [Python SDK](https://pypi.org/project/snaprender/) — `pip install snaprender`
+- [ChatGPT Actions](../chatgpt-actions/) — OpenAPI spec for Custom GPTs

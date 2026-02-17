@@ -1,6 +1,11 @@
 # snaprender-mcp
 
+[![npm](https://img.shields.io/npm/v/snaprender-mcp)](https://www.npmjs.com/package/snaprender-mcp)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](../LICENSE)
+
 MCP (Model Context Protocol) server for [SnapRender Screenshot API](https://snap-render.com). Lets AI agents like Claude capture website screenshots, check cache status, and monitor usage.
+
+**Published on npm:** [`snaprender-mcp`](https://www.npmjs.com/package/snaprender-mcp)
 
 ## Quick Start
 
@@ -86,6 +91,14 @@ Sign up for free at [app.snap-render.com](https://app.snap-render.com/auth/signu
 |----------|----------|-------------|
 | `SNAPRENDER_API_KEY` | Yes | Your API key (starts with `sk_live_`) |
 | `SNAPRENDER_URL` | No | API base URL (default: `https://app.snap-render.com`) |
+
+## Related
+
+- [Node.js SDK](https://www.npmjs.com/package/snaprender) — `npm install snaprender`
+- [Python SDK](https://pypi.org/project/snaprender/) — `pip install snaprender`
+- [OpenClaw Skill](../openclaw/) — Screenshot skill for OpenClaw agents
+- [ChatGPT Actions](../chatgpt-actions/) — OpenAPI spec for Custom GPTs
+- [Postman Collection](../postman/) — Pre-built API requests
 
 ## License
 

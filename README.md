@@ -1,6 +1,19 @@
 # SnapRender Integrations
 
+[![npm MCP](https://img.shields.io/npm/v/snaprender-mcp?label=MCP%20Server)](https://www.npmjs.com/package/snaprender-mcp)
+[![npm SDK](https://img.shields.io/npm/v/snaprender?label=Node.js%20SDK)](https://www.npmjs.com/package/snaprender)
+[![PyPI SDK](https://img.shields.io/pypi/v/snaprender?label=Python%20SDK)](https://pypi.org/project/snaprender/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](./LICENSE)
+
 Official integrations for [SnapRender Screenshot API](https://snap-render.com) — capture screenshots of any website as PNG, JPEG, WebP, or PDF.
+
+## Published Packages
+
+| Package | Install | Links |
+|---------|---------|-------|
+| **MCP Server** | `npx snaprender-mcp` | [npm](https://www.npmjs.com/package/snaprender-mcp) |
+| **Node.js SDK** | `npm install snaprender` | [npm](https://www.npmjs.com/package/snaprender) |
+| **Python SDK** | `pip install snaprender` | [PyPI](https://pypi.org/project/snaprender/) |
 
 ## What's Inside
 
