@@ -1,5 +1,6 @@
 # SnapRender Integrations
 
+[![smithery badge](https://smithery.ai/badge/snaprender/snaprender)](https://smithery.ai/server/snaprender/snaprender)
 [![npm MCP](https://img.shields.io/npm/v/snaprender-mcp?label=MCP%20Server)](https://www.npmjs.com/package/snaprender-mcp)
 [![npm SDK](https://img.shields.io/npm/v/snaprender?label=Node.js%20SDK)](https://www.npmjs.com/package/snaprender)
 [![PyPI SDK](https://img.shields.io/pypi/v/snaprender?label=Python%20SDK)](https://pypi.org/project/snaprender/)
