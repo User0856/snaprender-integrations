@@ -16,5 +16,18 @@
         "type": "stdio"
       }
     }
+  ],
+  "remoteEndpoints": [
+    {
+      "url": "https://app.snap-render.com/mcp",
+      "transport": {
+        "type": "streamable-http"
+      },
+      "auth": {
+        "type": "api-key",
+        "headerName": "Authorization",
+        "headerValuePrefix": "Bearer "
+      }
+    }
   ]
 }

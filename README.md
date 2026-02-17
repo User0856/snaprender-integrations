@@ -26,7 +26,7 @@ Official integrations for [SnapRender Screenshot API](https://snap-render.com) â
 
 ## Quick Start
 
-### MCP Server (Claude)
+### MCP Server (Claude) â€” Local
 
 ```json
 {
@@ -41,6 +41,16 @@ Official integrations for [SnapRender Screenshot API](https://snap-render.com) â
   }
 }
 ```
+
+### MCP Server â€” Remote (no install)
+
+Connect any MCP client directly to:
+
+```
+https://app.snap-render.com/mcp
+```
+
+Pass your API key via `Authorization: Bearer sk_live_...` or `X-API-Key` header. Uses Streamable HTTP transport (MCP spec 2025-03-26).
 
 ### SDKs
 

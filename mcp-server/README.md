@@ -45,6 +45,32 @@ Add to your project's `.mcp.json`:
 }
 ```
 
+### Remote Mode (no install)
+
+Connect any MCP client directly to the hosted endpoint — no `npx` or local install required:
+
+```
+https://app.snap-render.com/mcp
+```
+
+Pass your API key via `Authorization: Bearer sk_live_...` or `X-API-Key` header. Uses Streamable HTTP transport ([MCP spec 2025-03-26](https://modelcontextprotocol.io/specification/2025-03-26/basic/transports#streamable-http)).
+
+#### Claude Desktop (remote)
+
+```json
+{
+  "mcpServers": {
+    "snaprender": {
+      "type": "streamable-http",
+      "url": "https://app.snap-render.com/mcp",
+      "headers": {
+        "Authorization": "Bearer sk_live_your_key_here"
+      }
+    }
+  }
+}
+```
+
 ## Tools
 
 ### `take_screenshot`
