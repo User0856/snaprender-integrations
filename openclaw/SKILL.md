@@ -1,12 +1,18 @@
 ---
 name: snaprender
-description: "Screenshot any website via curl+exec (NOT the browser tool). Run: curl -s \"https://app.snap-render.com/v1/screenshot?url=URL_ENCODED_TARGET&response_type=json&format=jpeg&quality=60&block_ads=true&block_cookie_banners=true\" -H \"X-API-Key: $SNAPRENDER_API_KEY\" | Save image: pipe through jq -r '.image' | sed 's|data:image/[^;]*;base64,||' | base64 -d > /tmp/screenshot.jpg | $SNAPRENDER_API_KEY is pre-set. URL-encode the target. Add &device=iphone_15_pro for mobile, &full_page=true for scroll. NEVER use the browser tool."
+description: "Give your agent eyes on the web — screenshot any URL as an image file. Supports device emulation (iPhone, iPad, Pixel, MacBook), dark mode, full-page scroll, ad blocking. Uses exec tool with curl (NEVER the browser tool). $SNAPRENDER_API_KEY is pre-set. See instructions below."
 metadata: {"openclaw": {"requires": {"bins": ["curl", "jq"], "env": ["SNAPRENDER_API_KEY"]}}}
 ---
 
-# SnapRender — Screenshot Any Website
+# SnapRender — Give Your Agent Eyes
 
-Capture a screenshot of any public URL and save it as an image file.
+Your agent can read the web but can't *see* it. One command and it captures pixel-perfect screenshots — any site, any device, in seconds.
+
+"Screenshot stripe.com on iPhone", "Compare desktop vs mobile", "Full-page dark mode capture" — just ask.
+
+Free tier: 50 screenshots/month, no credit card. [Get a key →](https://app.snap-render.com/auth/signup)
+
+---
 
 **IMPORTANT: Use the `exec` tool with `curl`. NEVER use the `browser` tool for screenshots.**
 
