@@ -2,7 +2,13 @@
 
 Give [OpenClaw](https://github.com/nicepkg/openclaw) the ability to capture website screenshots using SnapRender.
 
-## Setup
+## Quick Install (ClawHub)
+
+```bash
+clawhub install snaprender
+```
+
+## Manual Setup
 
 ### 1. Copy the skill file
 
@@ -31,16 +37,17 @@ Add to `~/.openclaw/openclaw.json`:
 ### 3. Test
 
 ```bash
-# Start the gateway (first time only)
-openclaw gateway
-
-# In another terminal
-openclaw agent --session-id test --message "Screenshot stripe.com on iPhone and describe what you see"
+openclaw agent --local --session-id test --message "Screenshot stripe.com for me"
 ```
+
+## Prerequisites
+
+- **curl** — pre-installed on macOS/Linux
+- **jq** — `brew install jq` (macOS), `apt install jq` (Ubuntu)
 
 ## How It Works
 
-OpenClaw Skills are markdown files that teach the agent how to use an API. The agent reads the skill instructions and calls `curl` via bash to hit the SnapRender API. The response includes a base64 image that the vision model can analyze.
+The agent reads the skill description and runs `curl` via the exec tool to call the SnapRender API. The response is piped through `jq` to extract the base64 image, which is decoded and saved to `/tmp/screenshot.jpg`. The agent then reports capture metadata (file size, response time, cache status, remaining credits).
 
 ## Get an API Key
 

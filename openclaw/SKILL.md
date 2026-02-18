@@ -1,36 +1,85 @@
 ---
 name: snaprender
-description: Capture screenshots of any website for visual analysis
-metadata: {"openclaw": {"requires": {"bins": ["curl"], "env": ["SNAPRENDER_API_KEY"]}}}
+description: "Screenshot any website via curl+exec (NOT the browser tool). Run: curl -s \"https://app.snap-render.com/v1/screenshot?url=URL_ENCODED_TARGET&response_type=json&format=jpeg&quality=60&block_ads=true&block_cookie_banners=true\" -H \"X-API-Key: $SNAPRENDER_API_KEY\" | Save image: pipe through jq -r '.image' | sed 's|data:image/[^;]*;base64,||' | base64 -d > /tmp/screenshot.jpg | $SNAPRENDER_API_KEY is pre-set. URL-encode the target. Add &device=iphone_15_pro for mobile, &full_page=true for scroll. NEVER use the browser tool."
+metadata: {"openclaw": {"requires": {"bins": ["curl", "jq"], "env": ["SNAPRENDER_API_KEY"]}}}
 ---
 
-# SnapRender — Website Screenshot Tool
+# SnapRender — Screenshot Any Website
 
-When the user asks you to screenshot, capture, or visually inspect a website,
-use the SnapRender API to take a screenshot.
+Capture a screenshot of any public URL and save it as an image file.
 
-## API Call
+**IMPORTANT: Use the `exec` tool with `curl`. NEVER use the `browser` tool for screenshots.**
 
-Use bash with curl:
+## How to Capture
 
-curl -s "https://app.snap-render.com/v1/screenshot?url=URL&response_type=json&block_ads=true&block_cookie_banners=true" \
-  -H "X-API-Key: $SNAPRENDER_API_KEY"
+Run this command via the `exec` tool. Replace `ENCODED_URL` with the URL-encoded target (e.g. `https%3A%2F%2Fstripe.com`):
 
-## Optional Parameters
+```bash
+curl -s "https://app.snap-render.com/v1/screenshot?url=ENCODED_URL&response_type=json&format=jpeg&quality=60&block_ads=true&block_cookie_banners=true" \
+  -H "X-API-Key: $SNAPRENDER_API_KEY" \
+  | tee /tmp/snap_response.json \
+  | jq -r '.image' | sed 's|data:image/[^;]*;base64,||' | base64 -d > /tmp/screenshot.jpg \
+  && jq '{url, format, size, cache, responseTime, remainingCredits}' /tmp/snap_response.json
+```
 
-Add these as query parameters:
-- device=iphone_15_pro (or: iphone_14, pixel_7, ipad_pro, macbook_pro)
-- dark_mode=true
-- full_page=true
-- format=png (or: jpeg, webp, pdf)
+This saves the screenshot to `/tmp/screenshot.jpg` and prints metadata.
 
-## Response
+## Rules
 
-JSON with an `image` field containing a base64 data URI (data:image/png;base64,...).
-Pass this image to your vision capabilities to analyze the screenshot.
+1. **Use `exec` tool only** — NEVER the `browser` tool
+2. **`$SNAPRENDER_API_KEY` is already set** — use it literally in the command, do NOT replace it
+3. **URL-encode the target** — `https://stripe.com` → `https%3A%2F%2Fstripe.com`
+4. **Always use `format=jpeg&quality=60`** — keeps response small enough for the agent context
+5. **Always pipe to save the image to a file** — the base64 response is too large to display inline
+6. **Report metadata to the user** — file size, response time, cache status, remaining credits
+
+## Parameters
+
+Add as query parameters to the URL:
+
+| Parameter | Values | Default |
+|-----------|--------|---------|
+| url | URL-encoded target | required |
+| response_type | json | json (always use this) |
+| format | jpeg, png, webp | jpeg |
+| quality | 1-100 | 60 |
+| device | iphone_15_pro, pixel_7, ipad_pro, macbook_pro | desktop |
+| dark_mode | true, false | false |
+| full_page | true, false | false |
+| block_ads | true, false | true |
+| block_cookie_banners | true, false | true |
+| width | 320-3840 | 1280 |
+| height | 200-10000 | 800 |
+| delay | 0-10000 | 0 (ms wait after page load) |
 
 ## Examples
 
-- "Screenshot example.com" → call API with just the URL
-- "Screenshot stripe.com on iPhone" → add device=iphone_15_pro
-- "Dark mode screenshot of github.com" → add dark_mode=true
+**Desktop screenshot of stripe.com:**
+```bash
+curl -s "https://app.snap-render.com/v1/screenshot?url=https%3A%2F%2Fstripe.com&response_type=json&format=jpeg&quality=60&block_ads=true&block_cookie_banners=true" -H "X-API-Key: $SNAPRENDER_API_KEY" | tee /tmp/snap_response.json | jq -r '.image' | sed 's|data:image/[^;]*;base64,||' | base64 -d > /tmp/screenshot.jpg && jq '{url, format, size, cache, responseTime, remainingCredits}' /tmp/snap_response.json
+```
+
+**Mobile screenshot:** add `&device=iphone_15_pro` to the URL
+
+**Full scrollable page:** add `&full_page=true` to the URL
+
+**Dark mode:** add `&dark_mode=true` to the URL
+
+**Compare desktop vs mobile:** make two calls, save to `/tmp/screenshot_desktop.jpg` and `/tmp/screenshot_mobile.jpg`
+
+## After Capturing
+
+1. Tell the user the screenshot was saved to `/tmp/screenshot.jpg` (or the filename you used)
+2. Report metadata: file size, response time, cache status, remaining credits
+3. For comparisons, save each screenshot to a different filename
+
+## Errors
+
+- **401**: Invalid API key — check SNAPRENDER_API_KEY
+- **429**: Rate limit or quota exceeded — wait or upgrade plan
+- **Timeout**: Target site is slow — add `&delay=3000` to wait longer
+- **Empty response**: URL unreachable or blocked
+
+## Get an API Key
+
+Free at https://app.snap-render.com/auth/signup — 50 screenshots/month, no credit card.
