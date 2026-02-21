@@ -1,0 +1,52 @@
+{
+	"name": "n8n-nodes-snaprender",
+	"version": "0.1.0",
+	"description": "n8n node to capture website screenshots using SnapRender API. PNG, JPEG, WebP, PDF with device emulation, dark mode, ad blocking.",
+	"license": "MIT",
+	"homepage": "https://snap-render.com",
+	"keywords": [
+		"n8n-community-node-package",
+		"n8n",
+		"screenshot",
+		"web-capture",
+		"snaprender"
+	],
+	"author": {
+		"name": "SnapRender",
+		"email": "support@snap-render.com"
+	},
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/User0856/snaprender-integrations.git",
+		"directory": "n8n"
+	},
+	"engines": {
+		"node": ">=20.15"
+	},
+	"main": "index.js",
+	"scripts": {
+		"build": "tsc",
+		"dev": "tsc --watch",
+		"prepublishOnly": "npm run build"
+	},
+	"files": [
+		"dist"
+	],
+	"n8n": {
+		"n8nNodesApiVersion": 1,
+		"credentials": [
+			"dist/credentials/SnapRenderApi.credentials.js"
+		],
+		"nodes": [
+			"dist/nodes/SnapRender/SnapRender.node.js"
+		]
+	},
+	"devDependencies": {
+		"@types/node": "^25.3.0",
+		"n8n-workflow": "^2.9.0",
+		"typescript": "^5.8.0"
+	},
+	"peerDependencies": {
+		"n8n-workflow": "*"
+	}
+}
