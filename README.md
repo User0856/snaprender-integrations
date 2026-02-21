@@ -121,6 +121,15 @@ Get screenshot usage statistics.
 |-----------|------|----------|-------------|
 | `month` | string | No | Month in `YYYY-MM` format (default: current month) |
 
+## Agent Framework Integrations
+
+| Framework | Directory | Description |
+|-----------|-----------|-------------|
+| [LangChain](./langchain/) | `langchain/` | `@tool` decorated functions for LangChain / LangGraph agents |
+| [CrewAI](./crewai/) | `crewai/` | `BaseTool` subclasses for CrewAI agents |
+| [AutoGen](./autogen/) | `autogen/` | `FunctionTool` wrappers for Microsoft AutoGen agents |
+| [n8n](./n8n/) | `n8n/` | Community node for n8n workflows (`n8n-nodes-snaprender`) |
+
 ## Other Integrations
 
 | Integration | Description | Setup Time |
