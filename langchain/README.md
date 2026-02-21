@@ -1,11 +1,14 @@
-# SnapRender LangChain Tool
+# langchain-snaprender
 
-LangChain / LangGraph tool for [SnapRender Screenshot API](https://snap-render.com). Lets your LangChain agents capture website screenshots.
+[![PyPI](https://img.shields.io/pypi/v/langchain-snaprender)](https://pypi.org/project/langchain-snaprender/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](../LICENSE)
+
+LangChain / LangGraph tools for [SnapRender Screenshot API](https://snap-render.com). Lets your LangChain agents capture website screenshots as PNG, JPEG, WebP, or PDF.
 
 ## Install
 
 ```bash
-pip install snaprender langchain-core
+pip install langchain-snaprender
 ```
 
 ## Setup
@@ -19,7 +22,7 @@ Get a free key at [app.snap-render.com](https://app.snap-render.com/auth/signup)
 ## Usage
 
 ```python
-from snaprender_langchain import take_screenshot, check_cache, get_usage
+from langchain_snaprender import take_screenshot, check_cache, get_usage
 
 # Use as standalone tools
 result = take_screenshot.invoke({"url": "https://example.com"})
