@@ -125,7 +125,8 @@ Get screenshot usage statistics.
 
 | Framework | Directory | Description |
 |-----------|-----------|-------------|
-| [LangChain](./langchain/) | `langchain/` | `@tool` decorated functions for LangChain / LangGraph agents ([PyPI](https://pypi.org/project/langchain-snaprender/)) |
+| [LangChain Python](./langchain/) | `langchain/` | `@tool` decorated functions for LangChain / LangGraph agents ([PyPI](https://pypi.org/project/langchain-snaprender/)) |
+| [LangChain.js](./langchain-js/) | `langchain-js/` | `StructuredTool` classes for LangChain.js agents ([npm](https://www.npmjs.com/package/langchain-snaprender)) |
 | [CrewAI](./crewai/) | `crewai/` | `BaseTool` subclasses for CrewAI agents |
 | [AutoGen](./autogen/) | `autogen/` | `FunctionTool` wrappers for Microsoft AutoGen agents |
 | [n8n](./n8n/) | `n8n/` | Community node for n8n workflows ([npm](https://www.npmjs.com/package/n8n-nodes-snaprender)) |
@@ -168,7 +169,8 @@ Sign up free at [app.snap-render.com](https://app.snap-render.com/auth/signup) â
 - [MCP Server on Smithery](https://smithery.ai/server/snaprender/snaprender)
 - [Node.js SDK](https://www.npmjs.com/package/snaprender) (`npm install snaprender`)
 - [Python SDK](https://pypi.org/project/snaprender/) (`pip install snaprender`)
-- [LangChain Tool](https://pypi.org/project/langchain-snaprender/) (`pip install langchain-snaprender`)
+- [LangChain Python Tool](https://pypi.org/project/langchain-snaprender/) (`pip install langchain-snaprender`)
+- [LangChain.js Tool](https://www.npmjs.com/package/langchain-snaprender) (`npm install langchain-snaprender`)
 - [n8n Community Node](https://www.npmjs.com/package/n8n-nodes-snaprender) (`npm install n8n-nodes-snaprender`)
 - [OpenAPI Spec](./chatgpt-actions/openapi.json)
 - [Postman Collection](./postman/snaprender-postman-collection.json)
