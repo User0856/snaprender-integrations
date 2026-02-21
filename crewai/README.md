@@ -1,11 +1,14 @@
-# SnapRender CrewAI Tool
+# crewai-snaprender
 
-[CrewAI](https://crewai.com) tool for [SnapRender Screenshot API](https://snap-render.com). Lets your CrewAI agents capture website screenshots.
+[![PyPI](https://img.shields.io/pypi/v/crewai-snaprender)](https://pypi.org/project/crewai-snaprender/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](../LICENSE)
+
+CrewAI tools for [SnapRender Screenshot API](https://snap-render.com). Lets your CrewAI agents capture website screenshots as PNG, JPEG, WebP, or PDF.
 
 ## Install
 
 ```bash
-pip install snaprender crewai
+pip install crewai-snaprender
 ```
 
 ## Setup
@@ -20,7 +23,7 @@ Get a free key at [app.snap-render.com](https://app.snap-render.com/auth/signup)
 
 ```python
 from crewai import Agent, Task, Crew
-from snaprender_crewai import SnapRenderScreenshotTool, SnapRenderCacheTool, SnapRenderUsageTool
+from crewai_snaprender import SnapRenderScreenshotTool, SnapRenderCacheTool, SnapRenderUsageTool
 
 researcher = Agent(
     role="Web Researcher",

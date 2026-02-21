@@ -1,0 +1,47 @@
+[build-system]
+requires = ["setuptools>=68.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "crewai-snaprender"
+version = "0.1.0"
+description = "CrewAI tools for SnapRender Screenshot API — capture websites as PNG, JPEG, WebP, or PDF"
+readme = "README.md"
+license = {text = "MIT"}
+requires-python = ">=3.9"
+authors = [
+    { name = "SnapRender", email = "support@snap-render.com" },
+]
+keywords = [
+    "crewai",
+    "crewai-tool",
+    "screenshot",
+    "web-capture",
+    "snaprender",
+    "ai-agent",
+]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Software Development :: Libraries",
+    "Topic :: Internet :: WWW/HTTP",
+]
+dependencies = [
+    "crewai>=0.80.0",
+    "snaprender>=0.2.0",
+]
+
+[project.urls]
+Homepage = "https://snap-render.com"
+Repository = "https://github.com/User0856/snaprender-integrations/tree/main/crewai"
+Documentation = "https://snap-render.com"
+"Bug Tracker" = "https://github.com/User0856/snaprender-integrations/issues"
+
+[tool.setuptools.packages.find]
+include = ["crewai_snaprender*"]

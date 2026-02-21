@@ -1,11 +1,14 @@
-# SnapRender AutoGen Tool
+# autogen-ext-snaprender
 
-[Microsoft AutoGen](https://microsoft.github.io/autogen/) tool for [SnapRender Screenshot API](https://snap-render.com). Lets your AutoGen agents capture website screenshots.
+[![PyPI](https://img.shields.io/pypi/v/autogen-ext-snaprender)](https://pypi.org/project/autogen-ext-snaprender/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](../LICENSE)
+
+AutoGen tools for [SnapRender Screenshot API](https://snap-render.com). Lets your AutoGen agents capture website screenshots as PNG, JPEG, WebP, or PDF.
 
 ## Install
 
 ```bash
-pip install snaprender autogen-core
+pip install autogen-ext-snaprender
 ```
 
 ## Setup
@@ -19,7 +22,7 @@ Get a free key at [app.snap-render.com](https://app.snap-render.com/auth/signup)
 ## Usage
 
 ```python
-from snaprender_autogen import screenshot_tool, cache_tool, usage_tool
+from autogen_ext_snaprender import screenshot_tool, cache_tool, usage_tool
 
 # Use with AssistantAgent
 from autogen_agentchat.agents import AssistantAgent
