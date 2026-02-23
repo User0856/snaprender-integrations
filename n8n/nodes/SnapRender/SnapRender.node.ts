@@ -11,7 +11,7 @@ export class SnapRender implements INodeType {
 	description: INodeTypeDescription = {
 		displayName: 'SnapRender',
 		name: 'snapRender',
-		icon: 'file:snaprender.svg',
+		icon: 'file:snaprender.png',
 		group: ['transform'],
 		version: 1,
 		subtitle: '={{$parameter["operation"]}}',
