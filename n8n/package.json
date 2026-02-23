@@ -1,6 +1,6 @@
 {
 	"name": "n8n-nodes-snaprender",
-	"version": "0.1.0",
+	"version": "0.1.1",
 	"description": "n8n node to capture website screenshots using SnapRender API. PNG, JPEG, WebP, PDF with device emulation, dark mode, ad blocking.",
 	"license": "MIT",
 	"homepage": "https://snap-render.com",
@@ -25,7 +25,7 @@
 	},
 	"main": "index.js",
 	"scripts": {
-		"build": "tsc",
+		"build": "tsc && cp nodes/SnapRender/snaprender.svg dist/nodes/SnapRender/",
 		"dev": "tsc --watch",
 		"prepublishOnly": "npm run build"
 	},
