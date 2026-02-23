@@ -129,7 +129,7 @@ Get screenshot usage statistics.
 | [LangChain.js](./langchain-js/) | `langchain-js/` | `StructuredTool` classes for LangChain.js agents ([npm](https://www.npmjs.com/package/langchain-snaprender)) |
 | [CrewAI](./crewai/) | `crewai/` | `BaseTool` subclasses for CrewAI agents ([PyPI](https://pypi.org/project/crewai-snaprender/)) |
 | [AutoGen](./autogen/) | `autogen/` | `FunctionTool` wrappers for Microsoft AutoGen agents ([PyPI](https://pypi.org/project/autogen-ext-snaprender/)) |
-| [n8n](./n8n/) | `n8n/` | Community node for n8n workflows ([npm](https://www.npmjs.com/package/n8n-nodes-snaprender)) |
+| [n8n](https://github.com/User0856/n8n-nodes-snaprender) | Separate repo | Community node for n8n workflows ([npm](https://www.npmjs.com/package/n8n-nodes-snaprender)) |
 
 ## Other Integrations
 
