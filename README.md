@@ -159,7 +159,7 @@ curl "https://app.snap-render.com/v1/screenshot?url=https://example.com" \
 
 ## Get an API Key
 
-Sign up free at [app.snap-render.com](https://app.snap-render.com/auth/signup) — 50 screenshots/month, no credit card required.
+Sign up free at [app.snap-render.com](https://app.snap-render.com/auth/signup) — 500 screenshots/month, no credit card required.
 
 ## Links
 
