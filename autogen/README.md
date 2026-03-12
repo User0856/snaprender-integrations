@@ -17,7 +17,7 @@ pip install autogen-ext-snaprender
 export SNAPRENDER_API_KEY="sk_live_your_key_here"
 ```
 
-Get a free key at [app.snap-render.com](https://app.snap-render.com/auth/signup) — 50 screenshots/month, no credit card.
+Get a free key at [snap-render.com](https://snap-render.com/auth/signup) — 500 screenshots/month, no credit card.
 
 ## Usage
 

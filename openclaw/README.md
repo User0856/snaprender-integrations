@@ -85,7 +85,7 @@ Point your client at `https://app.snap-render.com/mcp` with an `Authorization: B
 
 ## Get an API Key
 
-Sign up free at [app.snap-render.com](https://app.snap-render.com/auth/signup) — 50 screenshots/month, no credit card required.
+Sign up free at [snap-render.com](https://snap-render.com/auth/signup) — 500 screenshots/month, no credit card required.
 
 ## Related
 

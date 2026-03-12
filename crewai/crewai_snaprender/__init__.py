@@ -26,7 +26,7 @@ def _client() -> SnapRender:
     if not key:
         raise RuntimeError(
             "SNAPRENDER_API_KEY environment variable is required. "
-            "Get a free key at https://app.snap-render.com/auth/signup"
+            "Get a free key at https://snap-render.com/auth/signup"
         )
     return SnapRender(api_key=key)
 

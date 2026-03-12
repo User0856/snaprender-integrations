@@ -10,7 +10,7 @@ Your agent can read the web but can't *see* it. One command and it captures pixe
 
 "Screenshot stripe.com on iPhone", "Compare desktop vs mobile", "Full-page dark mode capture" — just ask.
 
-Free tier: 50 screenshots/month, no credit card. [Get a key →](https://app.snap-render.com/auth/signup)
+Free tier: 500 screenshots/month, no credit card. [Get a key →](https://snap-render.com/auth/signup)
 
 ---
 
@@ -88,4 +88,4 @@ curl -s "https://app.snap-render.com/v1/screenshot?url=https%3A%2F%2Fstripe.com&
 
 ## Get an API Key
 
-Free at https://app.snap-render.com/auth/signup — 50 screenshots/month, no credit card.
+Free at https://snap-render.com/auth/signup — 500 screenshots/month, no credit card.

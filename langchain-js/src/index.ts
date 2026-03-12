@@ -8,7 +8,7 @@ function getClient(apiKey?: string): SnapRender {
 	if (!key) {
 		throw new Error(
 			"SNAPRENDER_API_KEY environment variable is required. " +
-				"Get a free key at https://app.snap-render.com/auth/signup",
+				"Get a free key at https://snap-render.com/auth/signup",
 		);
 	}
 	return new SnapRender({ apiKey: key });

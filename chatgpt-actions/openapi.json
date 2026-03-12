@@ -2,7 +2,7 @@
   "openapi": "3.1.0",
   "info": {
     "title": "SnapRender Screenshot API",
-    "description": "Capture screenshots of any website as PNG, JPEG, WebP, or PDF. To take a screenshot, call GET /v1/screenshot with a url parameter and your API key in the X-API-Key header. Set response_type=json to receive a base64 data URI (recommended for AI agents). Features: device emulation, dark mode, ad blocking, and cookie banner removal. Free tier: 50 screenshots/month, no credit card required.",
+    "description": "Capture screenshots of any website as PNG, JPEG, WebP, or PDF. To take a screenshot, call GET /v1/screenshot with a url parameter and your API key in the X-API-Key header. Set response_type=json to receive a base64 data URI (recommended for AI agents). Features: device emulation, dark mode, ad blocking, and cookie banner removal. Free tier: 500 screenshots/month, no credit card required.",
     "version": "1.0.0",
     "contact": {
       "name": "SnapRender Support",
@@ -367,7 +367,7 @@
         "type": "apiKey",
         "in": "header",
         "name": "X-API-Key",
-        "description": "API key (starts with sk_live_). Get one free at https://app.snap-render.com/auth/signup"
+        "description": "API key (starts with sk_live_). Get one free at https://snap-render.com/auth/signup"
       }
     },
     "schemas": {
