@@ -180,3 +180,8 @@ Sign up free at [snap-render.com](https://snap-render.com/auth/signup) — 500 s
 ## License
 
 MIT
+
+## Hosted deployment
+
+A hosted deployment is available on [Fronteir AI](https://fronteir.ai/mcp/user0856-snaprender-mcp).
+
