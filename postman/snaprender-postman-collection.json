@@ -666,6 +666,73 @@
 			"description": "Batch screenshot processing. Submit multiple URLs and poll for results."
 		},
 		{
+			"name": "Webhooks",
+			"item": [
+				{
+					"name": "Create Webhook",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"url\": \"https://your-server.com/webhook\",\n  \"events\": [\"screenshot.completed\", \"quota.warning\"]\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/v1/webhooks",
+							"host": ["{{base_url}}"],
+							"path": ["v1", "webhooks"]
+						},
+						"description": "Register a webhook URL to receive event notifications. Max 5 per account. Save the returned secret for signature verification."
+					}
+				},
+				{
+					"name": "List Webhooks",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/v1/webhooks",
+							"host": ["{{base_url}}"],
+							"path": ["v1", "webhooks"]
+						},
+						"description": "List all registered webhooks for your account."
+					}
+				},
+				{
+					"name": "Test Webhook",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/v1/webhooks/{{webhook_id}}/test",
+							"host": ["{{base_url}}"],
+							"path": ["v1", "webhooks", "{{webhook_id}}", "test"]
+						},
+						"description": "Send a test payload to a webhook to verify it's working."
+					}
+				},
+				{
+					"name": "Delete Webhook",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/v1/webhooks/{{webhook_id}}",
+							"host": ["{{base_url}}"],
+							"path": ["v1", "webhooks", "{{webhook_id}}"]
+						},
+						"description": "Remove a webhook. Future events will no longer be delivered."
+					}
+				}
+			],
+			"description": "Webhook management for event notifications (screenshot.completed, quota.warning, quota.exceeded)."
+		},
+		{
 			"name": "Health",
 			"item": [
 				{

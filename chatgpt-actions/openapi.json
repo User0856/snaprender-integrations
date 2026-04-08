@@ -699,6 +699,105 @@
         "security": [{ "apiKey": [] }]
       }
     },
+    "/v1/webhooks": {
+      "post": {
+        "operationId": "createWebhook",
+        "summary": "Create a webhook",
+        "description": "Register a webhook URL to receive event notifications. Max 5 webhooks per account. Payloads are signed with HMAC-SHA256 using the returned secret.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["url", "events"],
+                "properties": {
+                  "url": { "type": "string", "format": "uri", "description": "HTTPS endpoint URL for webhook delivery" },
+                  "events": { "type": "array", "items": { "type": "string", "enum": ["screenshot.completed", "quota.warning", "quota.exceeded"] }, "minItems": 1, "description": "Events to subscribe to" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Webhook created",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/WebhookResponse" }
+              }
+            }
+          },
+          "400": { "description": "Invalid request or max webhooks reached", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+          "401": { "description": "Unauthorized", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } }
+        },
+        "security": [{ "apiKey": [] }]
+      },
+      "get": {
+        "operationId": "listWebhooks",
+        "summary": "List webhooks",
+        "description": "List all webhooks for the authenticated account.",
+        "responses": {
+          "200": {
+            "description": "List of webhooks",
+            "content": {
+              "application/json": {
+                "schema": { "type": "array", "items": { "$ref": "#/components/schemas/WebhookResponse" } }
+              }
+            }
+          },
+          "401": { "description": "Unauthorized", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } }
+        },
+        "security": [{ "apiKey": [] }]
+      }
+    },
+    "/v1/webhooks/{webhookId}": {
+      "delete": {
+        "operationId": "deleteWebhook",
+        "summary": "Delete a webhook",
+        "description": "Remove a webhook. Future events will no longer be delivered to this URL.",
+        "parameters": [
+          { "name": "webhookId", "in": "path", "required": true, "schema": { "type": "string", "format": "uuid" } }
+        ],
+        "responses": {
+          "204": { "description": "Webhook deleted" },
+          "404": { "description": "Webhook not found", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+          "401": { "description": "Unauthorized", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } }
+        },
+        "security": [{ "apiKey": [] }]
+      }
+    },
+    "/v1/webhooks/{webhookId}/test": {
+      "post": {
+        "operationId": "testWebhook",
+        "summary": "Send test webhook delivery",
+        "description": "Send a test payload to a webhook URL to verify it's working correctly.",
+        "parameters": [
+          { "name": "webhookId", "in": "path", "required": true, "schema": { "type": "string", "format": "uuid" } }
+        ],
+        "responses": {
+          "200": {
+            "description": "Test delivery result",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "deliveryId": { "type": "string" },
+                    "statusCode": { "type": "integer", "nullable": true },
+                    "success": { "type": "boolean" },
+                    "deliveredAt": { "type": "string", "format": "date-time", "nullable": true }
+                  }
+                }
+              }
+            }
+          },
+          "404": { "description": "Webhook not found", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+          "401": { "description": "Unauthorized", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } }
+        },
+        "security": [{ "apiKey": [] }]
+      }
+    },
     "/health": {
       "get": {
         "operationId": "healthCheck",
@@ -780,6 +879,17 @@
           },
           "createdAt": { "type": "string", "format": "date-time" },
           "completedAt": { "type": "string", "format": "date-time", "description": "Present when job is completed or failed" }
+        }
+      },
+      "WebhookResponse": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string", "format": "uuid" },
+          "url": { "type": "string", "format": "uri" },
+          "events": { "type": "array", "items": { "type": "string", "enum": ["screenshot.completed", "quota.warning", "quota.exceeded"] } },
+          "secret": { "type": "string", "description": "HMAC-SHA256 signing secret (whsec_ prefix). Store securely." },
+          "isActive": { "type": "boolean" },
+          "createdAt": { "type": "string", "format": "date-time" }
         }
       },
       "Usage": {
