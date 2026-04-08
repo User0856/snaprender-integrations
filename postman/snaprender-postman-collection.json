@@ -76,6 +76,72 @@
 					}
 				},
 				{
+					"name": "Screenshot from HTML (POST)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"html\": \"<html><body><h1>Hello World</h1><p>Rendered from raw HTML.</p></body></html>\",\n  \"format\": \"png\",\n  \"width\": 800,\n  \"height\": 600\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/v1/screenshot",
+							"host": ["{{base_url}}"],
+							"path": ["v1", "screenshot"]
+						},
+						"description": "Render raw HTML content and capture as a screenshot. Uses POST with JSON body."
+					}
+				},
+				{
+					"name": "Screenshot from Markdown (POST)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"markdown\": \"# Hello World\\n\\nThis is **bold** and this is `code`.\\n\\n```js\\nconsole.log(42);\\n```\",\n  \"format\": \"png\",\n  \"width\": 800,\n  \"height\": 600\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/v1/screenshot",
+							"host": ["{{base_url}}"],
+							"path": ["v1", "screenshot"]
+						},
+						"description": "Render Markdown content with a styled template and capture as a screenshot. Uses POST with JSON body."
+					}
+				},
+				{
+					"name": "Screenshot URL via POST",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"url\": \"https://example.com\",\n  \"format\": \"png\",\n  \"width\": 1280,\n  \"height\": 800,\n  \"dark_mode\": true\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/v1/screenshot",
+							"host": ["{{base_url}}"],
+							"path": ["v1", "screenshot"]
+						},
+						"description": "Capture a URL screenshot using POST with JSON body. Same as GET but with native boolean/number types."
+					}
+				},
+				{
 					"name": "Take Screenshot (WebP)",
 					"request": {
 						"method": "GET",
@@ -331,6 +397,171 @@
 				}
 			],
 			"description": "Capture website screenshots in PNG, JPEG, WebP, or PDF format."
+		},
+		{
+			"name": "Signed URLs",
+			"item": [
+				{
+					"name": "Generate Signed URL",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"url\": \"https://example.com\",\n  \"expires_in\": 86400\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/v1/screenshot/sign",
+							"host": ["{{base_url}}"],
+							"path": ["v1", "screenshot", "sign"]
+						},
+						"description": "Generate a pre-signed URL that can render a screenshot without an API key. Signing is free and does not count against quota. The signed URL consumes one credit when rendered."
+					}
+				},
+				{
+					"name": "Generate Signed URL (Custom)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"url\": \"https://example.com\",\n  \"expires_in\": 604800,\n  \"format\": \"jpeg\",\n  \"width\": 1920,\n  \"height\": 1080,\n  \"dark_mode\": true,\n  \"block_ads\": true\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/v1/screenshot/sign",
+							"host": ["{{base_url}}"],
+							"path": ["v1", "screenshot", "sign"]
+						},
+						"description": "Generate a signed URL with custom screenshot settings and 7-day expiry."
+					}
+				},
+				{
+					"name": "Render Signed URL",
+					"request": {
+						"auth": { "type": "noauth" },
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/v1/screenshot/render?url=https%3A%2F%2Fexample.com&expires=PASTE_EXPIRES&key_prefix=PASTE_PREFIX&sig=PASTE_SIG",
+							"host": ["{{base_url}}"],
+							"path": ["v1", "screenshot", "render"],
+							"query": [
+								{ "key": "url", "value": "https%3A%2F%2Fexample.com" },
+								{ "key": "expires", "value": "PASTE_EXPIRES" },
+								{ "key": "key_prefix", "value": "PASTE_PREFIX" },
+								{ "key": "sig", "value": "PASTE_SIG" }
+							]
+						},
+						"description": "Render a screenshot using a signed URL. No API key required. Paste the values from the sign response."
+					}
+				}
+			],
+			"description": "Generate and use pre-signed URLs for sharing screenshots without exposing your API key."
+		},
+		{
+			"name": "Content Extraction",
+			"item": [
+				{
+					"name": "Extract Markdown",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/v1/extract?url=https://example.com&type=markdown",
+							"host": ["{{base_url}}"],
+							"path": ["v1", "extract"],
+							"query": [
+								{ "key": "url", "value": "https://example.com" },
+								{ "key": "type", "value": "markdown" }
+							]
+						},
+						"description": "Extract readable content as Markdown from any web page."
+					}
+				},
+				{
+					"name": "Extract Article",
+					"request": {
+						"method": "POST",
+						"header": [
+							{ "key": "Content-Type", "value": "application/json" }
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"url\": \"https://example.com\",\n  \"type\": \"article\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/v1/extract",
+							"host": ["{{base_url}}"],
+							"path": ["v1", "extract"]
+						},
+						"description": "Extract structured article with title, author, excerpt, and content."
+					}
+				},
+				{
+					"name": "Extract Metadata",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/v1/extract?url=https://example.com&type=metadata",
+							"host": ["{{base_url}}"],
+							"path": ["v1", "extract"],
+							"query": [
+								{ "key": "url", "value": "https://example.com" },
+								{ "key": "type", "value": "metadata" }
+							]
+						},
+						"description": "Extract page metadata including title, description, and OG/Twitter tags."
+					}
+				},
+				{
+					"name": "Extract Links",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/v1/extract?url=https://example.com&type=links",
+							"host": ["{{base_url}}"],
+							"path": ["v1", "extract"],
+							"query": [
+								{ "key": "url", "value": "https://example.com" },
+								{ "key": "type", "value": "links" }
+							]
+						},
+						"description": "Extract all links from a web page with their anchor text."
+					}
+				},
+				{
+					"name": "Extract with Selector",
+					"request": {
+						"method": "POST",
+						"header": [
+							{ "key": "Content-Type", "value": "application/json" }
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"url\": \"https://example.com\",\n  \"type\": \"text\",\n  \"selector\": \"#main-content\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/v1/extract",
+							"host": ["{{base_url}}"],
+							"path": ["v1", "extract"]
+						},
+						"description": "Extract text from a specific page element using a CSS selector."
+					}
+				}
+			],
+			"description": "Extract structured content from web pages. Supports markdown, text, html, article, links, and metadata extraction."
 		},
 		{
 			"name": "Usage",

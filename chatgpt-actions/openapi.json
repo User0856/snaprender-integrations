@@ -18,6 +18,95 @@
   ],
   "paths": {
     "/v1/screenshot": {
+      "post": {
+        "operationId": "takeScreenshotPost",
+        "summary": "Capture a screenshot from URL, HTML, or Markdown",
+        "description": "Takes a screenshot and returns it as a binary image or JSON with base64 data URI. Accepts a JSON body with exactly one of: url (capture a website), html (render raw HTML), or markdown (render Markdown with a styled template). All screenshot parameters (format, width, height, dark_mode, etc.) work with all three sources. Use POST when providing html or markdown content. Supports device emulation, dark mode, ad blocking, cookie banner removal, and caching.",
+        "x-openai-isConsequential": false,
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "url": { "type": "string", "description": "URL to capture (mutually exclusive with html and markdown)" },
+                  "html": { "type": "string", "description": "Raw HTML content to render (max 2MB, mutually exclusive with url and markdown)" },
+                  "markdown": { "type": "string", "description": "Markdown content to render with styled template (max 500KB, mutually exclusive with url and html)" },
+                  "format": { "type": "string", "enum": ["png", "jpeg", "webp", "pdf"], "default": "png" },
+                  "width": { "type": "integer", "minimum": 320, "maximum": 3840, "default": 1280 },
+                  "height": { "type": "integer", "minimum": 200, "maximum": 10000, "default": 800 },
+                  "full_page": { "type": "boolean", "default": false },
+                  "quality": { "type": "integer", "minimum": 1, "maximum": 100, "default": 90 },
+                  "delay": { "type": "integer", "minimum": 0, "maximum": 10000, "default": 0 },
+                  "dark_mode": { "type": "boolean", "default": false },
+                  "block_ads": { "type": "boolean", "default": true },
+                  "block_cookie_banners": { "type": "boolean", "default": true },
+                  "device": { "type": "string", "enum": ["iphone_14", "iphone_15_pro", "pixel_7", "ipad_pro", "macbook_pro"] },
+                  "hide_selectors": { "type": "string" },
+                  "click_selector": { "type": "string" },
+                  "user_agent": { "type": "string" },
+                  "cache": { "type": "boolean", "default": true },
+                  "cache_ttl": { "type": "integer", "minimum": 0, "maximum": 2592000, "default": 86400 },
+                  "response_type": { "type": "string", "enum": ["binary", "json"], "default": "binary" }
+                }
+              },
+              "examples": {
+                "html": {
+                  "summary": "Render HTML",
+                  "value": { "html": "<html><body><h1>Hello World</h1></body></html>", "format": "png", "width": 800, "height": 600 }
+                },
+                "markdown": {
+                  "summary": "Render Markdown",
+                  "value": { "markdown": "# Hello World\n\nThis is **bold** text.", "format": "png" }
+                },
+                "url": {
+                  "summary": "Capture URL (via POST)",
+                  "value": { "url": "https://example.com", "format": "png" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Screenshot captured successfully",
+            "headers": {
+              "X-Cache": { "schema": { "type": "string", "enum": ["HIT", "MISS"] } },
+              "X-Response-Time": { "schema": { "type": "string" } },
+              "X-Remaining-Credits": { "schema": { "type": "string" } },
+              "X-Request-Id": { "schema": { "type": "string" } }
+            },
+            "content": {
+              "image/png": { "schema": { "type": "string", "format": "binary" } },
+              "image/jpeg": { "schema": { "type": "string", "format": "binary" } },
+              "image/webp": { "schema": { "type": "string", "format": "binary" } },
+              "application/pdf": { "schema": { "type": "string", "format": "binary" } },
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "url": { "type": ["string", "null"], "description": "The captured URL (null for html/markdown)" },
+                    "source": { "type": "string", "enum": ["url", "html", "markdown"], "description": "Content source type" },
+                    "format": { "type": "string" },
+                    "width": { "type": "integer" },
+                    "height": { "type": "integer" },
+                    "image": { "type": "string", "description": "Base64 data URI" },
+                    "size": { "type": "integer" },
+                    "cache": { "type": "string", "enum": ["HIT", "MISS"] },
+                    "responseTime": { "type": "string" },
+                    "remainingCredits": { "type": "integer" }
+                  }
+                }
+              }
+            }
+          },
+          "400": { "description": "Invalid parameters", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+          "401": { "description": "Invalid or missing API key", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+          "429": { "description": "Rate limited or quota exceeded", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } }
+        },
+        "security": [{ "apiKey": [] }]
+      },
       "get": {
         "operationId": "takeScreenshot",
         "summary": "Capture a screenshot of a website",
@@ -274,6 +363,202 @@
         "security": [{ "apiKey": [] }]
       }
     },
+    "/v1/screenshot/sign": {
+      "post": {
+        "operationId": "signScreenshotUrl",
+        "summary": "Generate a signed screenshot URL",
+        "description": "Creates a pre-signed URL that captures a screenshot when visited. The signed URL can be used without an API key, making it ideal for embedding in emails, documents, or sharing with third parties. Signing is free and does not count against your quota. Each render of the signed URL consumes one credit. URLs are tamper-proof and expire after the specified duration.",
+        "x-openai-isConsequential": false,
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["url"],
+                "properties": {
+                  "url": { "type": "string", "description": "URL to capture (must be http or https)" },
+                  "expires_in": { "type": "integer", "minimum": 60, "maximum": 2592000, "default": 86400, "description": "URL validity in seconds (default: 86400 = 1 day, max: 2592000 = 30 days)" },
+                  "format": { "type": "string", "enum": ["png", "jpeg", "webp", "pdf"], "description": "Output format (default: png)" },
+                  "width": { "type": "integer", "minimum": 320, "maximum": 3840, "description": "Viewport width (default: 1280)" },
+                  "height": { "type": "integer", "minimum": 200, "maximum": 10000, "description": "Viewport height (default: 800)" },
+                  "full_page": { "type": "boolean", "description": "Capture entire page (default: false)" },
+                  "quality": { "type": "integer", "minimum": 1, "maximum": 100, "description": "Image quality (default: 90)" },
+                  "delay": { "type": "integer", "minimum": 0, "maximum": 10000, "description": "Wait after load in ms (default: 0)" },
+                  "dark_mode": { "type": "boolean", "description": "Dark mode (default: false)" },
+                  "block_ads": { "type": "boolean", "description": "Block ads (default: true)" },
+                  "block_cookie_banners": { "type": "boolean", "description": "Remove cookie banners (default: true)" },
+                  "device": { "type": "string", "enum": ["iphone_14", "iphone_15_pro", "pixel_7", "ipad_pro", "macbook_pro"] },
+                  "hide_selectors": { "type": "string", "description": "CSS selectors to hide" },
+                  "click_selector": { "type": "string", "description": "CSS selector to click" },
+                  "user_agent": { "type": "string", "description": "Custom user agent" }
+                }
+              },
+              "examples": {
+                "basic": {
+                  "summary": "Basic signed URL (1 day)",
+                  "value": { "url": "https://example.com" }
+                },
+                "custom": {
+                  "summary": "Custom settings, 7 day expiry",
+                  "value": { "url": "https://example.com", "expires_in": 604800, "format": "jpeg", "width": 1920, "dark_mode": true }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Signed URL generated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "signed_url": { "type": "string", "description": "The pre-signed render URL" },
+                    "expires_at": { "type": "string", "format": "date-time", "description": "When the URL expires" },
+                    "expires_in": { "type": "integer", "description": "Validity duration in seconds" }
+                  }
+                },
+                "example": {
+                  "signed_url": "https://app.snap-render.com/v1/screenshot/render?url=https%3A%2F%2Fexample.com&expires=1775646672&key_prefix=sk_live_A1Lr&sig=e166b220...",
+                  "expires_at": "2026-04-09T10:00:00.000Z",
+                  "expires_in": 86400
+                }
+              }
+            }
+          },
+          "400": { "description": "Invalid parameters or blocked URL", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+          "401": { "description": "Invalid or missing API key", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } }
+        },
+        "security": [{ "apiKey": [] }]
+      }
+    },
+    "/v1/screenshot/render": {
+      "get": {
+        "operationId": "renderSignedUrl",
+        "summary": "Render a signed screenshot URL",
+        "description": "Renders a screenshot using a pre-signed URL. No API key required. The URL must have been generated via POST /v1/screenshot/sign. Expired URLs return 410 Gone, tampered URLs return 403 Forbidden.",
+        "x-openai-isConsequential": false,
+        "parameters": [
+          { "name": "url", "in": "query", "required": true, "schema": { "type": "string" }, "description": "URL to capture" },
+          { "name": "expires", "in": "query", "required": true, "schema": { "type": "string" }, "description": "Unix timestamp expiry" },
+          { "name": "key_prefix", "in": "query", "required": true, "schema": { "type": "string" }, "description": "API key prefix for auth" },
+          { "name": "sig", "in": "query", "required": true, "schema": { "type": "string" }, "description": "HMAC-SHA256 signature" }
+        ],
+        "responses": {
+          "200": {
+            "description": "Screenshot rendered",
+            "content": {
+              "image/png": { "schema": { "type": "string", "format": "binary" } },
+              "image/jpeg": { "schema": { "type": "string", "format": "binary" } },
+              "image/webp": { "schema": { "type": "string", "format": "binary" } },
+              "application/pdf": { "schema": { "type": "string", "format": "binary" } }
+            }
+          },
+          "403": { "description": "Invalid signature", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+          "410": { "description": "Signed URL expired", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+          "429": { "description": "Quota exceeded", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } }
+        },
+        "security": []
+      }
+    },
+    "/v1/extract": {
+      "get": {
+        "operationId": "extractContentGet",
+        "summary": "Extract content from a web page (GET)",
+        "description": "Extract structured content from any web page. Supports 6 extraction types: markdown (readable content via Readability), text (plain text), html (raw HTML), article (structured with title/author/excerpt), links (all page links), metadata (OG tags, title, description). Uses query parameters for GET requests.",
+        "x-openai-isConsequential": false,
+        "parameters": [
+          { "name": "url", "in": "query", "required": true, "schema": { "type": "string" }, "description": "URL to extract content from" },
+          { "name": "type", "in": "query", "schema": { "type": "string", "enum": ["markdown", "text", "html", "article", "links", "metadata"], "default": "markdown" }, "description": "Extraction type (default: markdown)" },
+          { "name": "selector", "in": "query", "schema": { "type": "string" }, "description": "CSS selector to scope extraction" },
+          { "name": "block_ads", "in": "query", "schema": { "type": "string", "enum": ["true", "false"], "default": "true" }, "description": "Block ads (default: true)" },
+          { "name": "block_cookie_banners", "in": "query", "schema": { "type": "string", "enum": ["true", "false"], "default": "true" }, "description": "Remove cookie banners (default: true)" },
+          { "name": "delay", "in": "query", "schema": { "type": "integer", "minimum": 0, "maximum": 10000, "default": 0 }, "description": "Wait after load in ms" },
+          { "name": "max_length", "in": "query", "schema": { "type": "integer", "minimum": 1, "maximum": 500000, "default": 100000 }, "description": "Max content length in chars" },
+          { "name": "cache", "in": "query", "schema": { "type": "string", "enum": ["true", "false"], "default": "true" }, "description": "Use cached result (default: true)" },
+          { "name": "cache_ttl", "in": "query", "schema": { "type": "integer", "minimum": 0, "maximum": 2592000, "default": 86400 }, "description": "Cache TTL in seconds" }
+        ],
+        "responses": {
+          "200": {
+            "description": "Content extracted",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ExtractResult" },
+                "example": {
+                  "url": "https://example.com",
+                  "type": "markdown",
+                  "content": "# Example Domain\n\nThis domain is for use in documentation examples.",
+                  "wordCount": 10,
+                  "processingTimeMs": 1200
+                }
+              }
+            }
+          },
+          "400": { "description": "Invalid parameters", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+          "401": { "description": "Invalid or missing API key", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+          "429": { "description": "Rate limit or quota exceeded", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } }
+        },
+        "security": [{ "apiKey": [] }]
+      },
+      "post": {
+        "operationId": "extractContentPost",
+        "summary": "Extract content from a web page (POST)",
+        "description": "Extract structured content from any web page using a JSON body. Supports the same 6 extraction types as GET. POST is recommended for programmatic use as it accepts native JSON types.",
+        "x-openai-isConsequential": false,
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["url"],
+                "properties": {
+                  "url": { "type": "string", "description": "URL to extract content from" },
+                  "type": { "type": "string", "enum": ["markdown", "text", "html", "article", "links", "metadata"], "default": "markdown", "description": "Extraction type" },
+                  "selector": { "type": "string", "description": "CSS selector to scope extraction" },
+                  "block_ads": { "type": "boolean", "default": true, "description": "Block ads" },
+                  "block_cookie_banners": { "type": "boolean", "default": true, "description": "Remove cookie banners" },
+                  "delay": { "type": "integer", "minimum": 0, "maximum": 10000, "default": 0, "description": "Wait after load in ms" },
+                  "max_length": { "type": "integer", "minimum": 1, "maximum": 500000, "default": 100000, "description": "Max content length" },
+                  "cache": { "type": "boolean", "default": true, "description": "Use cached result" },
+                  "cache_ttl": { "type": "integer", "minimum": 0, "maximum": 2592000, "default": 86400, "description": "Cache TTL in seconds" }
+                }
+              },
+              "examples": {
+                "markdown": {
+                  "summary": "Extract as Markdown",
+                  "value": { "url": "https://example.com", "type": "markdown" }
+                },
+                "article": {
+                  "summary": "Extract article structure",
+                  "value": { "url": "https://example.com/blog/post", "type": "article" }
+                },
+                "metadata": {
+                  "summary": "Extract OG metadata",
+                  "value": { "url": "https://example.com", "type": "metadata" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Content extracted",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ExtractResult" }
+              }
+            }
+          },
+          "400": { "description": "Invalid parameters", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+          "401": { "description": "Invalid or missing API key", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+          "429": { "description": "Rate limit or quota exceeded", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } }
+        },
+        "security": [{ "apiKey": [] }]
+      }
+    },
     "/v1/usage": {
       "get": {
         "operationId": "getUsage",
@@ -367,7 +652,7 @@
         "type": "apiKey",
         "in": "header",
         "name": "X-API-Key",
-        "description": "API key (starts with sk_live_). Get one free at https://snap-render.com/auth/signup"
+        "description": "API key (starts with sk_live_). Get one free at https://app.snap-render.com/auth/signup"
       }
     },
     "schemas": {
@@ -382,6 +667,16 @@
               "status": { "type": "integer", "description": "HTTP status code" }
             }
           }
+        }
+      },
+      "ExtractResult": {
+        "type": "object",
+        "properties": {
+          "url": { "type": "string", "description": "The URL that was extracted" },
+          "type": { "type": "string", "enum": ["markdown", "text", "html", "article", "links", "metadata"], "description": "Extraction type used" },
+          "content": { "description": "Extracted content. String for markdown/text/html, object for article/metadata, array for links." },
+          "wordCount": { "type": "integer", "description": "Word count (for text, markdown, article types)" },
+          "processingTimeMs": { "type": "integer", "description": "Processing time in milliseconds" }
         }
       },
       "Usage": {
