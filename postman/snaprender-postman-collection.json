@@ -603,6 +603,69 @@
 			"description": "Check your API usage and quota."
 		},
 		{
+			"name": "Batch Screenshots",
+			"item": [
+				{
+					"name": "Create Batch Job",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"urls\": [\n    \"https://example.com\",\n    \"https://github.com\",\n    \"https://google.com\"\n  ],\n  \"format\": \"png\",\n  \"width\": 1280,\n  \"height\": 800\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/v1/screenshot/batch",
+							"host": ["{{base_url}}"],
+							"path": ["v1", "screenshot", "batch"]
+						},
+						"description": "Create a batch screenshot job for up to 50 URLs. Returns a job ID immediately. Poll the status endpoint to track progress and get download URLs."
+					}
+				},
+				{
+					"name": "Get Batch Status",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/v1/screenshot/batch/{{batch_job_id}}",
+							"host": ["{{base_url}}"],
+							"path": ["v1", "screenshot", "batch", "{{batch_job_id}}"]
+						},
+						"description": "Poll the status of a batch screenshot job. Returns progress, completed download URLs, and any errors."
+					}
+				},
+				{
+					"name": "Batch with Options",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"urls\": [\n    \"https://example.com\",\n    \"https://github.com\"\n  ],\n  \"format\": \"jpeg\",\n  \"width\": 1920,\n  \"height\": 1080,\n  \"full_page\": true,\n  \"dark_mode\": true,\n  \"quality\": 80\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/v1/screenshot/batch",
+							"host": ["{{base_url}}"],
+							"path": ["v1", "screenshot", "batch"]
+						},
+						"description": "Create a batch job with custom screenshot options applied to all URLs."
+					}
+				}
+			],
+			"description": "Batch screenshot processing. Submit multiple URLs and poll for results."
+		},
+		{
 			"name": "Health",
 			"item": [
 				{

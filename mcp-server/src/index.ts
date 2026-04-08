@@ -20,7 +20,7 @@ if (!API_KEY) {
 }
 
 const server = new Server(
-  { name: "snaprender-mcp", version: "1.3.0" },
+  { name: "snaprender-mcp", version: "1.4.0" },
   { capabilities: { tools: {} } }
 );
 
@@ -275,6 +275,73 @@ const TOOLS = [
     },
   },
   {
+    name: "batch_screenshots",
+    description:
+      "Create a batch screenshot job for multiple URLs (1-50). " +
+      "Returns immediately with a job ID. Use get_batch_status to poll for results. " +
+      "All URLs share the same screenshot options. Each URL consumes one credit; failed URLs get credits rolled back.",
+    inputSchema: {
+      type: "object" as const,
+      properties: {
+        urls: {
+          type: "array",
+          items: { type: "string" },
+          minItems: 1,
+          maxItems: 50,
+          description: "Array of URLs to capture (1-50)",
+        },
+        format: {
+          type: "string",
+          enum: ["png", "jpeg", "webp", "pdf"],
+          description: "Output format (default: png)",
+        },
+        width: {
+          type: "integer",
+          minimum: 320,
+          maximum: 3840,
+          description: "Viewport width in pixels (default: 1280)",
+        },
+        height: {
+          type: "integer",
+          minimum: 200,
+          maximum: 10000,
+          description: "Viewport height in pixels (default: 800)",
+        },
+        full_page: { type: "boolean", description: "Capture entire scrollable page (default: false)" },
+        quality: { type: "integer", minimum: 1, maximum: 100, description: "Image quality (default: 90)" },
+        delay: { type: "integer", minimum: 0, maximum: 10000, description: "Milliseconds to wait after load (default: 0)" },
+        dark_mode: { type: "boolean", description: "Enable dark mode (default: false)" },
+        block_ads: { type: "boolean", description: "Block ads (default: true)" },
+        block_cookie_banners: { type: "boolean", description: "Remove cookie banners (default: true)" },
+        device: {
+          type: "string",
+          enum: ["iphone_14", "iphone_15_pro", "pixel_7", "ipad_pro", "macbook_pro"],
+          description: "Device preset for emulation",
+        },
+        hide_selectors: { type: "string", description: "CSS selectors to hide" },
+        click_selector: { type: "string", description: "CSS selector to click" },
+        user_agent: { type: "string", description: "Custom user agent" },
+      },
+      required: ["urls"],
+    },
+  },
+  {
+    name: "get_batch_status",
+    description:
+      "Get the status of a batch screenshot job. Poll this until status is 'completed' or 'failed'. " +
+      "Completed items include presigned download URLs valid for 24 hours.",
+    inputSchema: {
+      type: "object" as const,
+      properties: {
+        job_id: {
+          type: "string",
+          description: "The batch job ID returned by batch_screenshots",
+        },
+      },
+      required: ["job_id"],
+    },
+  },
+  {
     name: "get_usage",
     description:
       "Get current month's screenshot usage statistics including " +
@@ -316,6 +383,10 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       return handleSignUrl(args as Record<string, unknown>);
     case "extract_content":
       return handleExtract(args as Record<string, unknown>);
+    case "batch_screenshots":
+      return handleBatch(args as Record<string, unknown>);
+    case "get_batch_status":
+      return handleBatchStatus(args as Record<string, unknown>);
     case "get_usage":
       return handleUsage();
     default:
@@ -539,6 +610,110 @@ async function handleExtract(args: Record<string, unknown>) {
       {
         type: "text" as const,
         text: `${contentStr}\n\n---\n${meta.join(" | ")}`,
+      },
+    ],
+  };
+}
+
+async function handleBatch(args: Record<string, unknown>) {
+  const urls = args.urls as string[];
+  if (!urls || !Array.isArray(urls) || urls.length === 0) {
+    throw new Error("urls array is required (1-50 URLs)");
+  }
+
+  const body: Record<string, unknown> = { urls };
+  const stringParams = ["format", "device", "hide_selectors", "click_selector", "user_agent"];
+  const intParams = ["width", "height", "quality", "delay"];
+  const boolParams = ["full_page", "dark_mode", "block_ads", "block_cookie_banners"];
+
+  for (const key of stringParams) {
+    if (args[key] !== undefined) body[key] = args[key];
+  }
+  for (const key of intParams) {
+    if (args[key] !== undefined) body[key] = Number(args[key]);
+  }
+  for (const key of boolParams) {
+    if (args[key] !== undefined) body[key] = !!args[key];
+  }
+
+  const response = await fetch(`${BASE_URL}/v1/screenshot/batch`, {
+    method: "POST",
+    headers: {
+      "X-API-Key": API_KEY!,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(body),
+  });
+
+  if (!response.ok) {
+    const errorMessage = await parseErrorMessage(response);
+    return {
+      content: [
+        {
+          type: "text" as const,
+          text: `Batch creation failed (${response.status}): ${errorMessage}`,
+        },
+      ],
+      isError: true,
+    };
+  }
+
+  const data = await response.json() as { jobId: string; status: string; statusUrl: string; total: number };
+  return {
+    content: [
+      {
+        type: "text" as const,
+        text: `Batch job created successfully.\n\nJob ID: ${data.jobId}\nStatus: ${data.status}\nTotal URLs: ${data.total}\n\nUse get_batch_status with job_id="${data.jobId}" to poll for results.`,
+      },
+    ],
+  };
+}
+
+async function handleBatchStatus(args: Record<string, unknown>) {
+  const jobId = args.job_id as string;
+  if (!jobId) throw new Error("job_id is required");
+
+  const response = await fetch(`${BASE_URL}/v1/screenshot/batch/${jobId}`, {
+    headers: { "X-API-Key": API_KEY! },
+  });
+
+  if (!response.ok) {
+    const errorMessage = await parseErrorMessage(response);
+    return {
+      content: [
+        {
+          type: "text" as const,
+          text: `Batch status check failed (${response.status}): ${errorMessage}`,
+        },
+      ],
+      isError: true,
+    };
+  }
+
+  const data = await response.json() as {
+    jobId: string; status: string; total: number; completed: number; failed: number;
+    items: Array<{ url: string; status: string; downloadUrl?: string; error?: string }>;
+    completedAt?: string;
+  };
+
+  const lines = [`Job: ${data.jobId}`, `Status: ${data.status}`, `Progress: ${data.completed + data.failed}/${data.total} (${data.completed} completed, ${data.failed} failed)`];
+  if (data.completedAt) lines.push(`Completed at: ${data.completedAt}`);
+  lines.push("", "Items:");
+  for (const item of data.items) {
+    if (item.status === "completed" && item.downloadUrl) {
+      lines.push(`  [OK] ${item.url} -> ${item.downloadUrl}`);
+    } else if (item.status === "failed") {
+      lines.push(`  [FAIL] ${item.url}: ${item.error}`);
+    } else {
+      lines.push(`  [${item.status.toUpperCase()}] ${item.url}`);
+    }
+  }
+
+  return {
+    content: [
+      {
+        type: "text" as const,
+        text: lines.join("\n"),
       },
     ],
   };

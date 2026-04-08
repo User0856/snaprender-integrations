@@ -621,6 +621,84 @@
         "security": [{ "apiKey": [] }]
       }
     },
+    "/v1/screenshot/batch": {
+      "post": {
+        "operationId": "createBatchJob",
+        "summary": "Create a batch screenshot job",
+        "description": "Submit up to 50 URLs for batch screenshot processing. Returns immediately with a job ID. Poll GET /v1/screenshot/batch/{jobId} for results. Each URL consumes one credit; failed URLs get credits rolled back automatically.",
+        "x-openai-isConsequential": false,
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["urls"],
+                "properties": {
+                  "urls": { "type": "array", "items": { "type": "string" }, "minItems": 1, "maxItems": 50, "description": "Array of URLs to capture (1-50)" },
+                  "format": { "type": "string", "enum": ["png", "jpeg", "webp", "pdf"], "default": "png" },
+                  "width": { "type": "integer", "minimum": 320, "maximum": 3840, "default": 1280 },
+                  "height": { "type": "integer", "minimum": 200, "maximum": 10000, "default": 800 },
+                  "full_page": { "type": "boolean", "default": false },
+                  "quality": { "type": "integer", "minimum": 1, "maximum": 100, "default": 90 },
+                  "delay": { "type": "integer", "minimum": 0, "maximum": 10000, "default": 0 },
+                  "dark_mode": { "type": "boolean", "default": false },
+                  "block_ads": { "type": "boolean", "default": true },
+                  "block_cookie_banners": { "type": "boolean", "default": true },
+                  "hide_selectors": { "type": "string" },
+                  "click_selector": { "type": "string" },
+                  "device": { "type": "string", "enum": ["iphone_14", "iphone_15_pro", "pixel_7", "ipad_pro", "macbook_pro"] },
+                  "user_agent": { "type": "string" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "202": {
+            "description": "Batch job created",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/BatchJobResponse" }
+              }
+            }
+          },
+          "400": { "description": "Invalid request", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+          "401": { "description": "Unauthorized", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+          "429": { "description": "Rate limited or quota exceeded", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } }
+        },
+        "security": [{ "apiKey": [] }]
+      }
+    },
+    "/v1/screenshot/batch/{jobId}": {
+      "get": {
+        "operationId": "getBatchJobStatus",
+        "summary": "Get batch job status",
+        "description": "Poll the status of a batch screenshot job. Returns current progress and download URLs for completed items. Download URLs are presigned and valid for 24 hours.",
+        "parameters": [
+          {
+            "name": "jobId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" },
+            "description": "The batch job ID returned by POST /v1/screenshot/batch"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Batch job status",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/BatchJobResponse" }
+              }
+            }
+          },
+          "404": { "description": "Job not found or expired", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+          "401": { "description": "Unauthorized", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } }
+        },
+        "security": [{ "apiKey": [] }]
+      }
+    },
     "/health": {
       "get": {
         "operationId": "healthCheck",
@@ -677,6 +755,31 @@
           "content": { "description": "Extracted content. String for markdown/text/html, object for article/metadata, array for links." },
           "wordCount": { "type": "integer", "description": "Word count (for text, markdown, article types)" },
           "processingTimeMs": { "type": "integer", "description": "Processing time in milliseconds" }
+        }
+      },
+      "BatchJobResponse": {
+        "type": "object",
+        "properties": {
+          "jobId": { "type": "string", "format": "uuid", "description": "Unique batch job identifier" },
+          "status": { "type": "string", "enum": ["pending", "processing", "completed", "failed"], "description": "Overall job status" },
+          "statusUrl": { "type": "string", "description": "URL to poll for status updates" },
+          "total": { "type": "integer", "description": "Total number of URLs in the batch" },
+          "completed": { "type": "integer", "description": "Number of successfully completed screenshots" },
+          "failed": { "type": "integer", "description": "Number of failed screenshots" },
+          "items": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "url": { "type": "string", "description": "The URL that was captured" },
+                "status": { "type": "string", "enum": ["pending", "completed", "failed"] },
+                "downloadUrl": { "type": "string", "description": "Presigned download URL (24h validity, present when completed)" },
+                "error": { "type": "string", "description": "Error message (present when failed)" }
+              }
+            }
+          },
+          "createdAt": { "type": "string", "format": "date-time" },
+          "completedAt": { "type": "string", "format": "date-time", "description": "Present when job is completed or failed" }
         }
       },
       "Usage": {
