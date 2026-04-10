@@ -46,7 +46,7 @@
                   "hide_selectors": { "type": "string" },
                   "click_selector": { "type": "string" },
                   "user_agent": { "type": "string" },
-                  "cache": { "type": "boolean", "default": true },
+                  "cache": { "type": "boolean", "default": false },
                   "cache_ttl": { "type": "integer", "minimum": 0, "maximum": 2592000, "default": 86400 },
                   "response_type": { "type": "string", "enum": ["binary", "json"], "default": "binary" }
                 }
@@ -477,7 +477,7 @@
           { "name": "block_cookie_banners", "in": "query", "schema": { "type": "string", "enum": ["true", "false"], "default": "true" }, "description": "Remove cookie banners (default: true)" },
           { "name": "delay", "in": "query", "schema": { "type": "integer", "minimum": 0, "maximum": 10000, "default": 0 }, "description": "Wait after load in ms" },
           { "name": "max_length", "in": "query", "schema": { "type": "integer", "minimum": 1, "maximum": 500000, "default": 100000 }, "description": "Max content length in chars" },
-          { "name": "cache", "in": "query", "schema": { "type": "string", "enum": ["true", "false"], "default": "true" }, "description": "Use cached result (default: true)" },
+          { "name": "cache", "in": "query", "schema": { "type": "string", "enum": ["true", "false"], "default": "false" }, "description": "Use cached result (default: false)" },
           { "name": "cache_ttl", "in": "query", "schema": { "type": "integer", "minimum": 0, "maximum": 2592000, "default": 86400 }, "description": "Cache TTL in seconds" }
         ],
         "responses": {
@@ -522,7 +522,7 @@
                   "block_cookie_banners": { "type": "boolean", "default": true, "description": "Remove cookie banners" },
                   "delay": { "type": "integer", "minimum": 0, "maximum": 10000, "default": 0, "description": "Wait after load in ms" },
                   "max_length": { "type": "integer", "minimum": 1, "maximum": 500000, "default": 100000, "description": "Max content length" },
-                  "cache": { "type": "boolean", "default": true, "description": "Use cached result" },
+                  "cache": { "type": "boolean", "default": false, "description": "Use cached result (default: false)" },
                   "cache_ttl": { "type": "integer", "minimum": 0, "maximum": 2592000, "default": 86400, "description": "Cache TTL in seconds" }
                 }
               },

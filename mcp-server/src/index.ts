@@ -120,7 +120,7 @@ const TOOLS = [
         cache: {
           type: "boolean",
           description:
-            "Use cached result if available. Set to false to force a fresh capture (default: true)",
+            "Use cached result if available. Set to true to enable caching (default: false)",
         },
         cache_ttl: {
           type: "integer",
@@ -262,7 +262,7 @@ const TOOLS = [
         },
         cache: {
           type: "boolean",
-          description: "Use cached result if available (default: true)",
+          description: "Use cached result if available (default: false)",
         },
         cache_ttl: {
           type: "integer",
