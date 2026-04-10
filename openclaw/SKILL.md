@@ -10,7 +10,7 @@ Your agent can read the web but can't *see* it. One command and it captures pixe
 
 "Screenshot stripe.com on iPhone", "Extract the article from this blog post", "Compare desktop vs mobile", "Get all links from this page" — just ask.
 
-Free tier: 500 requests/month, no credit card. [Get a key →](https://snap-render.com/auth/signup)
+Free tier: 500 requests/month, no credit card. [Get a key ->](https://snap-render.com/auth/signup)
 
 ---
 
@@ -20,14 +20,18 @@ Free tier: 500 requests/month, no credit card. [Get a key →](https://snap-rend
 
 ## Screenshot: How to Capture
 
-Run this command via the `exec` tool. Replace `ENCODED_URL` with the URL-encoded target (e.g. `https%3A%2F%2Fstripe.com`):
+Run this command via the `exec` tool. Replace `TARGET_URL` with the target URL:
 
 ```bash
-curl -s "https://app.snap-render.com/v1/screenshot?url=ENCODED_URL&response_type=json&format=jpeg&quality=60&block_ads=true&block_cookie_banners=true" \
+jq -n --arg url 'TARGET_URL' \
+  '{url: $url, response_type: "json", format: "jpeg", quality: 60, block_ads: true, block_cookie_banners: true}' \
+| curl -s -X POST "https://app.snap-render.com/v1/screenshot" \
   -H "X-API-Key: $SNAPRENDER_API_KEY" \
-  | tee /tmp/snap_response.json \
-  | jq -r '.image' | sed 's|data:image/[^;]*;base64,||' | base64 -d > /tmp/screenshot.jpg \
-  && jq '{url, format, size, cache, responseTime, remainingCredits}' /tmp/snap_response.json
+  -H "Content-Type: application/json" \
+  -d @- \
+| tee /tmp/snap_response.json \
+| jq -r '.image' | sed 's|data:image/[^;]*;base64,||' | base64 -d > /tmp/screenshot.jpg \
+&& jq '{url, format, size, cache, responseTime, remainingCredits}' /tmp/snap_response.json
 ```
 
 This saves the screenshot to `/tmp/screenshot.jpg` and prints metadata.
@@ -36,22 +40,70 @@ This saves the screenshot to `/tmp/screenshot.jpg` and prints metadata.
 
 1. **Use `exec` tool only** — NEVER the `browser` tool
 2. **`$SNAPRENDER_API_KEY` is already set** — use it literally in the command, do NOT replace it
-3. **URL-encode the target** — `https://stripe.com` → `https%3A%2F%2Fstripe.com`
+3. **Always build JSON with `jq --arg`** — never interpolate user input directly into shell strings or JSON. Pass values via `jq -n --arg` to prevent injection
 4. **Always use `format=jpeg&quality=60`** — keeps response small enough for the agent context
 5. **Always pipe to save the image to a file** — the base64 response is too large to display inline
 6. **Report metadata to the user** — file size, response time, cache status, remaining credits
 
+## Render HTML or Markdown
+
+Use POST with a JSON body to render raw HTML or Markdown content (no URL needed). Always use `jq --arg` to safely pass content:
+
+```bash
+# HTML
+jq -n --arg html '<html><body><h1>Hello</h1><p>World</p></body></html>' \
+  '{html: $html, format: "jpeg", quality: 60, response_type: "json"}' \
+| curl -s -X POST "https://app.snap-render.com/v1/screenshot" \
+  -H "X-API-Key: $SNAPRENDER_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d @- \
+| tee /tmp/snap_response.json \
+| jq -r '.image' | sed 's|data:image/[^;]*;base64,||' | base64 -d > /tmp/screenshot.jpg \
+&& jq '{source, format, size, cache, responseTime, remainingCredits}' /tmp/snap_response.json
+```
+
+```bash
+# Markdown
+jq -n --arg md '# Hello World\n\nThis is **bold** text.' \
+  '{markdown: $md, format: "jpeg", quality: 60, response_type: "json"}' \
+| curl -s -X POST "https://app.snap-render.com/v1/screenshot" \
+  -H "X-API-Key: $SNAPRENDER_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d @- \
+| tee /tmp/snap_response.json \
+| jq -r '.image' | sed 's|data:image/[^;]*;base64,||' | base64 -d > /tmp/screenshot.jpg \
+&& jq '{source, format, size, cache, responseTime, remainingCredits}' /tmp/snap_response.json
+```
+
+Provide exactly one of `url`, `html`, or `markdown` in the JSON body. HTML max 2MB, Markdown max 500KB.
+
+## Signed URLs
+
+Generate a pre-signed URL that anyone can use to view the screenshot without an API key. Signing is free; rendering the URL costs one credit.
+
+```bash
+jq -n --arg url 'TARGET_URL' \
+  '{url: $url, expires_in: 86400}' \
+| curl -s -X POST "https://app.snap-render.com/v1/screenshot/sign" \
+  -H "X-API-Key: $SNAPRENDER_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d @- \
+| jq '.'
+```
+
+The response contains `signed_url`, `expires_at`, and `expires_in`. Use the `signed_url` in `<img>` tags, share it, or open it in a browser. No API key needed to render it.
+
 ## Screenshot: Parameters
 
-Add as query parameters to the URL:
+Pass as fields in the JSON body:
 
 | Parameter | Values | Default |
 |-----------|--------|---------|
-| url | URL-encoded target | required |
+| url | target URL | required |
 | response_type | json | json (always use this) |
-| format | jpeg, png, webp | jpeg |
+| format | jpeg, png, webp, pdf | jpeg |
 | quality | 1-100 | 60 |
-| device | iphone_15_pro, pixel_7, ipad_pro, macbook_pro | desktop |
+| device | iphone_14, iphone_15_pro, pixel_7, ipad_pro, macbook_pro | desktop |
 | dark_mode | true, false | false |
 | full_page | true, false | false |
 | block_ads | true, false | true |
@@ -59,19 +111,32 @@ Add as query parameters to the URL:
 | width | 320-3840 | 1280 |
 | height | 200-10000 | 800 |
 | delay | 0-10000 | 0 (ms wait after page load) |
+| cache | true, false | false (set true to enable caching) |
+| cache_ttl | 0-2592000 | 86400 (seconds, clamped to plan max) |
+| hide_selectors | CSS selectors | none (comma-separated, hides elements before capture) |
+| click_selector | CSS selector | none (clicks element before capture) |
+| user_agent | string | default Chrome UA |
+
+To add extra options, include them as fields in the `jq` JSON object. Example for dark mode on iPhone:
+
+```bash
+jq -n --arg url 'TARGET_URL' \
+  '{url: $url, response_type: "json", format: "jpeg", quality: 60, block_ads: true, block_cookie_banners: true, device: "iphone_15_pro", dark_mode: true}' \
+| curl -s -X POST ...
+```
 
 ## Screenshot: Examples
 
 **Desktop screenshot of stripe.com:**
 ```bash
-curl -s "https://app.snap-render.com/v1/screenshot?url=https%3A%2F%2Fstripe.com&response_type=json&format=jpeg&quality=60&block_ads=true&block_cookie_banners=true" -H "X-API-Key: $SNAPRENDER_API_KEY" | tee /tmp/snap_response.json | jq -r '.image' | sed 's|data:image/[^;]*;base64,||' | base64 -d > /tmp/screenshot.jpg && jq '{url, format, size, cache, responseTime, remainingCredits}' /tmp/snap_response.json
+jq -n --arg url 'https://stripe.com' '{url: $url, response_type: "json", format: "jpeg", quality: 60, block_ads: true, block_cookie_banners: true}' | curl -s -X POST "https://app.snap-render.com/v1/screenshot" -H "X-API-Key: $SNAPRENDER_API_KEY" -H "Content-Type: application/json" -d @- | tee /tmp/snap_response.json | jq -r '.image' | sed 's|data:image/[^;]*;base64,||' | base64 -d > /tmp/screenshot.jpg && jq '{url, format, size, cache, responseTime, remainingCredits}' /tmp/snap_response.json
 ```
 
-**Mobile screenshot:** add `&device=iphone_15_pro` to the URL
+**Mobile screenshot:** add `device: "iphone_15_pro"` to the jq object
 
-**Full scrollable page:** add `&full_page=true` to the URL
+**Full scrollable page:** add `full_page: true` to the jq object
 
-**Dark mode:** add `&dark_mode=true` to the URL
+**Dark mode:** add `dark_mode: true` to the jq object
 
 **Compare desktop vs mobile:** make two calls, save to `/tmp/screenshot_desktop.jpg` and `/tmp/screenshot_mobile.jpg`
 
@@ -85,15 +150,17 @@ curl -s "https://app.snap-render.com/v1/screenshot?url=https%3A%2F%2Fstripe.com&
 
 ## Extract: How to Extract Content
 
-Run this command via the `exec` tool. Replace `ENCODED_URL` with the URL-encoded target and `TYPE` with the extraction type:
+Run this command via the `exec` tool. Replace `TARGET_URL` with the target URL and `TYPE` with the extraction type. Always use `jq --arg` to safely pass the URL:
 
 ```bash
-curl -s -X POST "https://app.snap-render.com/v1/extract" \
+jq -n --arg url 'TARGET_URL' --arg type 'TYPE' \
+  '{url: $url, type: $type}' \
+| curl -s -X POST "https://app.snap-render.com/v1/extract" \
   -H "X-API-Key: $SNAPRENDER_API_KEY" \
   -H "Content-Type: application/json" \
-  -d '{"url": "TARGET_URL", "type": "TYPE"}' \
-  | tee /tmp/extract_response.json \
-  | jq '{url, type, wordCount, processingTimeMs}'
+  -d @- \
+| tee /tmp/extract_response.json \
+| jq '{url, type, wordCount, processingTimeMs}'
 ```
 
 To see the full extracted content:
@@ -112,7 +179,7 @@ jq -r '.content' /tmp/extract_response.json > /tmp/extracted_content.md
 
 1. **Use `exec` tool only** — NEVER the `browser` tool
 2. **`$SNAPRENDER_API_KEY` is already set** — use it literally in the command, do NOT replace it
-3. **Use the POST method** — send URL and options as JSON body
+3. **Always build JSON with `jq --arg`** — never interpolate user input directly into shell strings or JSON. Pass values via `jq -n --arg` to prevent injection
 4. **Save large content to a file** — do not dump thousands of lines into the conversation
 5. **Report metadata to the user** — word count, processing time, extraction type
 
@@ -129,7 +196,7 @@ jq -r '.content' /tmp/extract_response.json > /tmp/extracted_content.md
 
 ## Extract: Parameters
 
-Send as JSON body fields with POST:
+Pass as fields in the JSON body:
 
 | Parameter | Type | Default | Description |
 |-----------|------|---------|-------------|
@@ -145,32 +212,27 @@ Send as JSON body fields with POST:
 
 **Extract a page as Markdown:**
 ```bash
-curl -s -X POST "https://app.snap-render.com/v1/extract" -H "X-API-Key: $SNAPRENDER_API_KEY" -H "Content-Type: application/json" -d '{"url": "https://stripe.com/docs/api", "type": "markdown"}' | tee /tmp/extract_response.json | jq '{url, type, wordCount, processingTimeMs}'
+jq -n --arg url 'https://stripe.com/docs/api' '{url: $url, type: "markdown"}' | curl -s -X POST "https://app.snap-render.com/v1/extract" -H "X-API-Key: $SNAPRENDER_API_KEY" -H "Content-Type: application/json" -d @- | tee /tmp/extract_response.json | jq '{url, type, wordCount, processingTimeMs}'
 ```
 
 **Extract just the article content with metadata:**
 ```bash
-curl -s -X POST "https://app.snap-render.com/v1/extract" -H "X-API-Key: $SNAPRENDER_API_KEY" -H "Content-Type: application/json" -d '{"url": "https://example.com/blog/post", "type": "article"}' | tee /tmp/extract_response.json | jq '{title: .content.title, author: .content.author, wordCount: .content.wordCount, processingTimeMs}'
+jq -n --arg url 'https://example.com/blog/post' '{url: $url, type: "article"}' | curl -s -X POST "https://app.snap-render.com/v1/extract" -H "X-API-Key: $SNAPRENDER_API_KEY" -H "Content-Type: application/json" -d @- | tee /tmp/extract_response.json | jq '{title: .content.title, author: .content.author, wordCount: .content.wordCount, processingTimeMs}'
 ```
 
 **Get all links from a page:**
 ```bash
-curl -s -X POST "https://app.snap-render.com/v1/extract" -H "X-API-Key: $SNAPRENDER_API_KEY" -H "Content-Type: application/json" -d '{"url": "https://example.com", "type": "links"}' | tee /tmp/extract_response.json | jq '.content | length' && jq '.content[:10]' /tmp/extract_response.json
+jq -n --arg url 'https://example.com' '{url: $url, type: "links"}' | curl -s -X POST "https://app.snap-render.com/v1/extract" -H "X-API-Key: $SNAPRENDER_API_KEY" -H "Content-Type: application/json" -d @- | tee /tmp/extract_response.json | jq '.content | length' && jq '.content[:10]' /tmp/extract_response.json
 ```
 
 **Get page metadata (OpenGraph, Twitter Card, SEO):**
 ```bash
-curl -s -X POST "https://app.snap-render.com/v1/extract" -H "X-API-Key: $SNAPRENDER_API_KEY" -H "Content-Type: application/json" -d '{"url": "https://example.com", "type": "metadata"}' | tee /tmp/extract_response.json | jq '.content'
+jq -n --arg url 'https://example.com' '{url: $url, type: "metadata"}' | curl -s -X POST "https://app.snap-render.com/v1/extract" -H "X-API-Key: $SNAPRENDER_API_KEY" -H "Content-Type: application/json" -d @- | tee /tmp/extract_response.json | jq '.content'
 ```
 
 **Extract from a specific CSS selector:**
 ```bash
-curl -s -X POST "https://app.snap-render.com/v1/extract" -H "X-API-Key: $SNAPRENDER_API_KEY" -H "Content-Type: application/json" -d '{"url": "https://example.com", "type": "text", "selector": "main article"}' | tee /tmp/extract_response.json | jq '{url, type, wordCount, processingTimeMs}'
-```
-
-**GET method (simpler for quick queries):**
-```bash
-curl -s "https://app.snap-render.com/v1/extract?url=https%3A%2F%2Fexample.com&type=markdown" -H "X-API-Key: $SNAPRENDER_API_KEY" | tee /tmp/extract_response.json | jq '{url, type, wordCount, processingTimeMs}'
+jq -n --arg url 'https://example.com' --arg sel 'main article' '{url: $url, type: "text", selector: $sel}' | curl -s -X POST "https://app.snap-render.com/v1/extract" -H "X-API-Key: $SNAPRENDER_API_KEY" -H "Content-Type: application/json" -d @- | tee /tmp/extract_response.json | jq '{url, type, wordCount, processingTimeMs}'
 ```
 
 ## Extract: After Extracting
