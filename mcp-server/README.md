@@ -136,7 +136,7 @@ Get screenshot usage statistics.
 
 ## Get an API Key
 
-Sign up for free at [snap-render.com](https://snap-render.com/auth/signup) — 500 screenshots/month, no credit card required.
+Sign up for free at [snap-render.com](https://snap-render.com/auth/signup) — 200 screenshots/month, no credit card required.
 
 ## Environment Variables
 

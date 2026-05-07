@@ -10,7 +10,7 @@ Your agent can read the web but can't *see* it. One command and it captures pixe
 
 "Screenshot stripe.com on iPhone", "Extract the article from this blog post", "Compare desktop vs mobile", "Get all links from this page" — just ask.
 
-Free tier: 500 requests/month, no credit card. [Get a key ->](https://snap-render.com/auth/signup)
+Free tier: 200 requests/month, no credit card. [Get a key ->](https://snap-render.com/auth/signup)
 
 ---
 
@@ -254,4 +254,4 @@ jq -n --arg url 'https://example.com' --arg sel 'main article' '{url: $url, type
 
 ## Get an API Key
 
-Free at https://snap-render.com/auth/signup — 500 requests/month, no credit card.
+Free at https://snap-render.com/auth/signup — 200 requests/month, no credit card.
