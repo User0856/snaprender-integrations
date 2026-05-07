@@ -211,6 +211,17 @@ Sign up for free at [snap-render.com](https://snap-render.com/auth/signup) — 2
 | `SNAPRENDER_API_KEY` | Yes | Your API key (starts with `sk_live_`) |
 | `SNAPRENDER_URL` | No | API base URL (default: `https://app.snap-render.com`) |
 
+## Privacy Policy
+
+This MCP server connects to the SnapRender API at `app.snap-render.com`. When you use it:
+
+- **Data sent:** URLs you provide for screenshots/extraction, plus screenshot parameters. No conversation data, chat history, or Claude memory is accessed or collected.
+- **Data stored:** URLs are logged temporarily (up to 90 days) for debugging and abuse prevention. Screenshots are cached based on your plan settings and automatically deleted after the cache TTL expires.
+- **Authentication:** Your API key is stored locally (in your environment or MCP config) and sent to the SnapRender API via HTTPS. It is never shared with third parties.
+- **Third parties:** Stripe (payments), Resend (transactional emails), Cloudflare (DNS/CDN). No data is sold or shared for advertising.
+
+Full policy: [https://snap-render.com/privacy](https://snap-render.com/privacy)
+
 ## Related
 
 - [Node.js SDK](https://www.npmjs.com/package/snaprender) — `npm install snaprender`

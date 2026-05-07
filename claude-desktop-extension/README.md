@@ -121,13 +121,23 @@ Or use the remote server (zero install):
 }
 ```
 
+## Privacy Policy
+
+This extension connects to the SnapRender API at `app.snap-render.com`. When you use it:
+
+- **Data sent:** URLs you provide for screenshots/extraction, plus screenshot parameters (format, viewport, device). No conversation data, chat history, or Claude memory is accessed or collected.
+- **Data stored:** URLs are logged temporarily (up to 90 days) for debugging and abuse prevention. Screenshots are cached based on your plan settings and automatically deleted after the cache TTL expires.
+- **Authentication:** Your API key is stored locally on your machine (in Claude Desktop config) and sent to the SnapRender API via HTTPS. It is never shared with third parties.
+- **Third parties:** Stripe (payments), Resend (transactional emails), Cloudflare (DNS/CDN). No data is sold or shared for advertising.
+
+Full policy: [https://snap-render.com/privacy](https://snap-render.com/privacy)
+
 ## Links
 
 - [API Docs](https://snap-render.com/docs)
 - [SDKs](https://snap-render.com/sdks) (Node.js, Python, Go)
 - [npm: snaprender-mcp](https://www.npmjs.com/package/snaprender-mcp)
 - [MCP Registry](https://registry.modelcontextprotocol.io)
-- [Privacy Policy](https://snap-render.com/privacy)
 
 ## License
 
