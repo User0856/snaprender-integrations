@@ -1,19 +1,11 @@
 {
+  "manifest_version": "0.2",
   "name": "snaprender",
-  "display_name": "SnapRender",
   "version": "1.5.2",
-  "description": "Screenshot any website, extract content, and render HTML/Markdown to images. Supports device emulation, dark mode, ad blocking, batch processing, and signed URLs.",
+  "description": "Screenshot, extract, and render web pages via the SnapRender API",
   "author": {
-    "name": "SnapRender",
-    "url": "https://snap-render.com"
+    "name": "SnapRender"
   },
-  "homepage": "https://snap-render.com",
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/User0856/snaprender-integrations"
-  },
-  "icon": "icon.svg",
-  "is_local": false,
   "server": {
     "type": "node",
     "entry_point": "server/index.js",
@@ -29,101 +21,10 @@
     "api_key": {
       "type": "string",
       "title": "SnapRender API Key",
-      "description": "Your API key from app.snap-render.com/dashboard (starts with sk_live_). Sign up free at snap-render.com.",
+      "description": "Your API key from app.snap-render.com/dashboard (starts with sk_live_)",
       "sensitive": true,
       "required": true
     }
   },
-  "tools": [
-    {
-      "name": "take_screenshot",
-      "description": "Capture a screenshot of a website URL, HTML, or Markdown as PNG, JPEG, WebP, or PDF",
-      "annotations": {
-        "title": "Take Screenshot",
-        "readOnlyHint": true,
-        "destructiveHint": false,
-        "openWorldHint": true
-      }
-    },
-    {
-      "name": "extract_content",
-      "description": "Extract content from a web page as markdown, text, HTML, article data, links, or metadata",
-      "annotations": {
-        "title": "Extract Content",
-        "readOnlyHint": true,
-        "destructiveHint": false,
-        "openWorldHint": true
-      }
-    },
-    {
-      "name": "check_screenshot_cache",
-      "description": "Check if a screenshot is cached without using quota",
-      "annotations": {
-        "title": "Check Cache",
-        "readOnlyHint": true,
-        "destructiveHint": false,
-        "openWorldHint": true
-      }
-    },
-    {
-      "name": "sign_screenshot_url",
-      "description": "Generate a signed URL for a screenshot that works without an API key",
-      "annotations": {
-        "title": "Sign Screenshot URL",
-        "readOnlyHint": true,
-        "destructiveHint": false,
-        "openWorldHint": true
-      }
-    },
-    {
-      "name": "batch_screenshots",
-      "description": "Create a batch screenshot job for 1-50 URLs processed in parallel",
-      "annotations": {
-        "title": "Batch Screenshots",
-        "readOnlyHint": true,
-        "destructiveHint": false,
-        "openWorldHint": true
-      }
-    },
-    {
-      "name": "get_batch_status",
-      "description": "Check the status and download URLs for a batch screenshot job",
-      "annotations": {
-        "title": "Get Batch Status",
-        "readOnlyHint": true,
-        "destructiveHint": false,
-        "openWorldHint": true
-      }
-    },
-    {
-      "name": "manage_webhooks",
-      "description": "Create, list, delete, or test webhook subscriptions for event notifications",
-      "annotations": {
-        "title": "Manage Webhooks",
-        "readOnlyHint": false,
-        "destructiveHint": false,
-        "openWorldHint": true
-      }
-    },
-    {
-      "name": "get_usage",
-      "description": "Get current month's screenshot usage and remaining quota",
-      "annotations": {
-        "title": "Get Usage",
-        "readOnlyHint": true,
-        "destructiveHint": false,
-        "openWorldHint": false
-      }
-    }
-  ],
-  "keywords": ["screenshot", "web", "api", "scraping", "extract", "pdf", "image", "capture"],
-  "license": "MIT",
-  "privacy_policy": "https://snap-render.com/privacy",
-  "compatibility": {
-    "claude_desktop": ">=0.10.0",
-    "platforms": ["darwin", "win32", "linux"],
-    "runtimes": {
-      "node": ">=18.0.0"
-    }
-  }
+  "license": "MIT"
 }
