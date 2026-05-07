@@ -1,0 +1,15 @@
+{
+  "name": "snaprender-mcp-tests",
+  "version": "1.0.0",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "test": "tsx mcp-full-test.ts",
+    "test:stdio": "TRANSPORT=stdio tsx mcp-full-test.ts",
+    "test:remote": "TRANSPORT=remote tsx mcp-full-test.ts"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.12.1",
+    "tsx": "^4.19.0"
+  }
+}
