@@ -11,6 +11,8 @@ const API_KEY = process.env.SNAPRENDER_API_KEY;
 const BASE_URL =
   process.env.SNAPRENDER_URL || "https://app.snap-render.com";
 
+const REQUEST_TIMEOUT_MS = 60_000;
+
 if (!API_KEY) {
   console.error(
     "Error: SNAPRENDER_API_KEY environment variable is required.\n" +
@@ -19,8 +21,13 @@ if (!API_KEY) {
   process.exit(1);
 }
 
+function log(level: "info" | "warn" | "error", message: string, data?: Record<string, unknown>) {
+  const entry = { timestamp: new Date().toISOString(), level, message, ...data };
+  process.stderr.write(JSON.stringify(entry) + "\n");
+}
+
 const server = new Server(
-  { name: "snaprender-mcp", version: "1.5.0" },
+  { name: "snaprender-mcp", version: "1.5.2" },
   { capabilities: { tools: {} } }
 );
 
@@ -34,6 +41,12 @@ const TOOLS = [
       "Returns the image as a PNG, JPEG, WebP, or PDF. " +
       "Supports device emulation (iPhone, Pixel, iPad), dark mode, ad blocking, " +
       "cookie banner removal, full-page capture, and custom viewports.",
+    annotations: {
+      title: "Take Screenshot",
+      readOnlyHint: true,
+      destructiveHint: false,
+      openWorldHint: true,
+    },
     inputSchema: {
       type: "object" as const,
       properties: {
@@ -139,6 +152,12 @@ const TOOLS = [
       "Check if a screenshot is already cached without capturing a new one. " +
       "Does not count against your quota. Pass the same parameters you would use for take_screenshot " +
       "so the cache key matches correctly.",
+    annotations: {
+      title: "Check Screenshot Cache",
+      readOnlyHint: true,
+      destructiveHint: false,
+      openWorldHint: true,
+    },
     inputSchema: {
       type: "object" as const,
       properties: {
@@ -170,6 +189,12 @@ const TOOLS = [
       "Generate a signed URL for a screenshot that can be used without an API key. " +
       "Useful for embedding screenshots in emails, documents, or sharing with third parties. " +
       "Signing is free, rendering the URL consumes one credit. URLs expire after the specified duration.",
+    annotations: {
+      title: "Sign Screenshot URL",
+      readOnlyHint: true,
+      destructiveHint: false,
+      openWorldHint: true,
+    },
     inputSchema: {
       type: "object" as const,
       properties: {
@@ -224,6 +249,12 @@ const TOOLS = [
       "Extract content from a web page. Returns structured data based on the extraction type. " +
       "Supports: markdown (readable content), text (plain text), html (raw HTML), " +
       "article (structured with title/author/excerpt), links (all page links), metadata (OG tags, title, description).",
+    annotations: {
+      title: "Extract Content",
+      readOnlyHint: true,
+      destructiveHint: false,
+      openWorldHint: true,
+    },
     inputSchema: {
       type: "object" as const,
       properties: {
@@ -278,8 +309,14 @@ const TOOLS = [
     name: "batch_screenshots",
     description:
       "Create a batch screenshot job for multiple URLs (1-50). " +
-      "Returns immediately with a job ID. Use get_batch_status to poll for results. " +
+      "Returns immediately with a job ID. Use get_batch_status to poll for results (wait 2-5 seconds between polls). " +
       "All URLs share the same screenshot options. Each URL consumes one credit; failed URLs get credits rolled back.",
+    annotations: {
+      title: "Batch Screenshots",
+      readOnlyHint: true,
+      destructiveHint: false,
+      openWorldHint: true,
+    },
     inputSchema: {
       type: "object" as const,
       properties: {
@@ -328,8 +365,14 @@ const TOOLS = [
   {
     name: "get_batch_status",
     description:
-      "Get the status of a batch screenshot job. Poll this until status is 'completed' or 'failed'. " +
+      "Get the status of a batch screenshot job. Poll this until status is 'completed' or 'failed' (wait 2-5 seconds between polls). " +
       "Completed items include presigned download URLs valid for 24 hours.",
+    annotations: {
+      title: "Get Batch Status",
+      readOnlyHint: true,
+      destructiveHint: false,
+      openWorldHint: true,
+    },
     inputSchema: {
       type: "object" as const,
       properties: {
@@ -347,6 +390,12 @@ const TOOLS = [
       "Create, list, or delete webhooks for event notifications. " +
       "Events: screenshot.completed (batch job done), quota.warning (80% used), quota.exceeded (100% used). " +
       "Max 5 webhooks per account. Payloads are signed with HMAC-SHA256.",
+    annotations: {
+      title: "Manage Webhooks",
+      readOnlyHint: false,
+      destructiveHint: false,
+      openWorldHint: true,
+    },
     inputSchema: {
       type: "object" as const,
       properties: {
@@ -357,7 +406,7 @@ const TOOLS = [
         },
         url: {
           type: "string",
-          description: "Webhook endpoint URL (required for 'create')",
+          description: "Webhook endpoint URL (required for 'create'). Must be a public HTTPS URL.",
         },
         events: {
           type: "array",
@@ -377,6 +426,12 @@ const TOOLS = [
     description:
       "Get current month's screenshot usage statistics including " +
       "screenshots used, limit, and remaining quota.",
+    annotations: {
+      title: "Get Usage",
+      readOnlyHint: true,
+      destructiveHint: false,
+      openWorldHint: false,
+    },
     inputSchema: {
       type: "object" as const,
       properties: {},
@@ -386,13 +441,42 @@ const TOOLS = [
 
 // --- Helpers ---
 
-async function parseErrorMessage(response: Response): Promise<string> {
-  const body = await response.text();
+async function fetchWithTimeout(url: string, options?: RequestInit): Promise<Response> {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
   try {
-    const parsed = JSON.parse(body);
-    return parsed.error?.message || body;
+    const response = await fetch(url, { ...options, signal: controller.signal });
+    return response;
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
+function sanitizeError(status: number, rawMessage: string): string {
+  if (status === 401) return "Authentication failed. Check your API key.";
+  if (status === 403) return "Access denied.";
+  if (status === 429) return "Rate limit exceeded. Try again later.";
+  if (status >= 500) return "SnapRender service error. Try again later.";
+
+  const parsed = (() => {
+    try { return JSON.parse(rawMessage); } catch { return null; }
+  })();
+  if (parsed?.error?.message) return String(parsed.error.message);
+
+  if (rawMessage.length > 200) return rawMessage.slice(0, 200) + "...";
+  return rawMessage;
+}
+
+function validateWebhookUrl(url: string): string | null {
+  try {
+    const parsed = new URL(url);
+    if (parsed.protocol !== "https:") return "Webhook URL must use HTTPS.";
+    if (["localhost", "127.0.0.1", "[::1]"].includes(parsed.hostname)) {
+      return "Webhook URL cannot point to localhost.";
+    }
+    return null;
   } catch {
-    return body;
+    return "Invalid webhook URL format.";
   }
 }
 
@@ -405,25 +489,44 @@ server.setRequestHandler(ListToolsRequestSchema, async () => ({
 server.setRequestHandler(CallToolRequestSchema, async (request) => {
   const { name, arguments: args } = request.params;
 
-  switch (name) {
-    case "take_screenshot":
-      return handleScreenshot(args as Record<string, unknown>);
-    case "check_screenshot_cache":
-      return handleCacheCheck(args as Record<string, unknown>);
-    case "sign_screenshot_url":
-      return handleSignUrl(args as Record<string, unknown>);
-    case "extract_content":
-      return handleExtract(args as Record<string, unknown>);
-    case "batch_screenshots":
-      return handleBatch(args as Record<string, unknown>);
-    case "get_batch_status":
-      return handleBatchStatus(args as Record<string, unknown>);
-    case "manage_webhooks":
-      return handleWebhooks(args as Record<string, unknown>);
-    case "get_usage":
-      return handleUsage();
-    default:
-      throw new Error(`Unknown tool: ${name}`);
+  try {
+    switch (name) {
+      case "take_screenshot":
+        return await handleScreenshot(args as Record<string, unknown>);
+      case "check_screenshot_cache":
+        return await handleCacheCheck(args as Record<string, unknown>);
+      case "sign_screenshot_url":
+        return await handleSignUrl(args as Record<string, unknown>);
+      case "extract_content":
+        return await handleExtract(args as Record<string, unknown>);
+      case "batch_screenshots":
+        return await handleBatch(args as Record<string, unknown>);
+      case "get_batch_status":
+        return await handleBatchStatus(args as Record<string, unknown>);
+      case "manage_webhooks":
+        return await handleWebhooks(args as Record<string, unknown>);
+      case "get_usage":
+        return await handleUsage();
+      default:
+        return {
+          content: [{ type: "text" as const, text: `Unknown tool: ${name}` }],
+          isError: true,
+        };
+    }
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    if (error instanceof Error && error.name === "AbortError") {
+      log("error", "Request timed out", { tool: name });
+      return {
+        content: [{ type: "text" as const, text: "Request timed out. The server took too long to respond." }],
+        isError: true,
+      };
+    }
+    log("error", "Tool execution failed", { tool: name, error: message });
+    return {
+      content: [{ type: "text" as const, text: message }],
+      isError: true,
+    };
   }
 });
 
@@ -459,7 +562,7 @@ async function handleScreenshot(args: Record<string, unknown>) {
       if (args[key] !== undefined) body[key] = !!args[key];
     }
 
-    response = await fetch(`${BASE_URL}/v1/screenshot`, {
+    response = await fetchWithTimeout(`${BASE_URL}/v1/screenshot`, {
       method: "POST",
       headers: {
         "X-API-Key": API_KEY!,
@@ -485,13 +588,15 @@ async function handleScreenshot(args: Record<string, unknown>) {
       if (args[key] !== undefined) params.set(key, args[key] ? "true" : "false");
     }
 
-    response = await fetch(`${BASE_URL}/v1/screenshot?${params}`, {
+    response = await fetchWithTimeout(`${BASE_URL}/v1/screenshot?${params}`, {
       headers: { "X-API-Key": API_KEY! },
     });
   }
 
   if (!response.ok) {
-    const errorMessage = await parseErrorMessage(response);
+    const raw = await response.text();
+    const errorMessage = sanitizeError(response.status, raw);
+    log("warn", "Screenshot failed", { status: response.status });
     return {
       content: [
         {
@@ -511,7 +616,6 @@ async function handleScreenshot(args: Record<string, unknown>) {
   const responseTime = response.headers.get("X-Response-Time") || "unknown";
   const remaining = response.headers.get("X-Remaining-Credits") || "unknown";
 
-  // PDFs are returned as text resource since MCP image type doesn't support PDF
   if (format === "pdf") {
     return {
       content: [
@@ -564,7 +668,7 @@ async function handleSignUrl(args: Record<string, unknown>) {
     if (args[key] !== undefined) body[key] = !!args[key];
   }
 
-  const response = await fetch(`${BASE_URL}/v1/screenshot/sign`, {
+  const response = await fetchWithTimeout(`${BASE_URL}/v1/screenshot/sign`, {
     method: "POST",
     headers: {
       "X-API-Key": API_KEY!,
@@ -574,7 +678,9 @@ async function handleSignUrl(args: Record<string, unknown>) {
   });
 
   if (!response.ok) {
-    const errorMessage = await parseErrorMessage(response);
+    const raw = await response.text();
+    const errorMessage = sanitizeError(response.status, raw);
+    log("warn", "Sign URL failed", { status: response.status });
     return {
       content: [
         {
@@ -611,7 +717,7 @@ async function handleExtract(args: Record<string, unknown>) {
   if (args.cache !== undefined) body.cache = !!args.cache;
   if (args.cache_ttl !== undefined) body.cache_ttl = Number(args.cache_ttl);
 
-  const response = await fetch(`${BASE_URL}/v1/extract`, {
+  const response = await fetchWithTimeout(`${BASE_URL}/v1/extract`, {
     method: "POST",
     headers: {
       "X-API-Key": API_KEY!,
@@ -621,7 +727,9 @@ async function handleExtract(args: Record<string, unknown>) {
   });
 
   if (!response.ok) {
-    const errorMessage = await parseErrorMessage(response);
+    const raw = await response.text();
+    const errorMessage = sanitizeError(response.status, raw);
+    log("warn", "Extract failed", { status: response.status });
     return {
       content: [
         {
@@ -659,18 +767,24 @@ async function handleWebhooks(args: Record<string, unknown>) {
       if (!url) throw new Error("url is required for create");
       if (!events || events.length === 0) throw new Error("events array is required for create");
 
-      const response = await fetch(`${BASE_URL}/v1/webhooks`, {
+      const urlError = validateWebhookUrl(url);
+      if (urlError) throw new Error(urlError);
+
+      const response = await fetchWithTimeout(`${BASE_URL}/v1/webhooks`, {
         method: "POST",
         headers: { "X-API-Key": API_KEY!, "Content-Type": "application/json" },
         body: JSON.stringify({ url, events }),
       });
 
       if (!response.ok) {
-        const errorMessage = await parseErrorMessage(response);
+        const raw = await response.text();
+        const errorMessage = sanitizeError(response.status, raw);
+        log("warn", "Webhook creation failed", { status: response.status });
         return { content: [{ type: "text" as const, text: `Webhook creation failed (${response.status}): ${errorMessage}` }], isError: true };
       }
 
       const data = await response.json() as { id: string; url: string; events: string[]; secret: string };
+      log("info", "Webhook created", { webhookId: data.id });
       return {
         content: [{
           type: "text" as const,
@@ -680,12 +794,14 @@ async function handleWebhooks(args: Record<string, unknown>) {
     }
 
     case "list": {
-      const response = await fetch(`${BASE_URL}/v1/webhooks`, {
+      const response = await fetchWithTimeout(`${BASE_URL}/v1/webhooks`, {
         headers: { "X-API-Key": API_KEY! },
       });
 
       if (!response.ok) {
-        const errorMessage = await parseErrorMessage(response);
+        const raw = await response.text();
+        const errorMessage = sanitizeError(response.status, raw);
+        log("warn", "List webhooks failed", { status: response.status });
         return { content: [{ type: "text" as const, text: `List webhooks failed (${response.status}): ${errorMessage}` }], isError: true };
       }
 
@@ -697,16 +813,19 @@ async function handleWebhooks(args: Record<string, unknown>) {
       const webhookId = args.webhook_id as string;
       if (!webhookId) throw new Error("webhook_id is required for delete");
 
-      const response = await fetch(`${BASE_URL}/v1/webhooks/${webhookId}`, {
+      const response = await fetchWithTimeout(`${BASE_URL}/v1/webhooks/${webhookId}`, {
         method: "DELETE",
         headers: { "X-API-Key": API_KEY! },
       });
 
       if (!response.ok && response.status !== 204) {
-        const errorMessage = await parseErrorMessage(response);
+        const raw = await response.text();
+        const errorMessage = sanitizeError(response.status, raw);
+        log("warn", "Delete webhook failed", { status: response.status });
         return { content: [{ type: "text" as const, text: `Delete webhook failed (${response.status}): ${errorMessage}` }], isError: true };
       }
 
+      log("info", "Webhook deleted", { webhookId });
       return { content: [{ type: "text" as const, text: `Webhook ${webhookId} deleted successfully.` }] };
     }
 
@@ -714,13 +833,15 @@ async function handleWebhooks(args: Record<string, unknown>) {
       const webhookId = args.webhook_id as string;
       if (!webhookId) throw new Error("webhook_id is required for test");
 
-      const response = await fetch(`${BASE_URL}/v1/webhooks/${webhookId}/test`, {
+      const response = await fetchWithTimeout(`${BASE_URL}/v1/webhooks/${webhookId}/test`, {
         method: "POST",
         headers: { "X-API-Key": API_KEY! },
       });
 
       if (!response.ok) {
-        const errorMessage = await parseErrorMessage(response);
+        const raw = await response.text();
+        const errorMessage = sanitizeError(response.status, raw);
+        log("warn", "Test webhook failed", { status: response.status });
         return { content: [{ type: "text" as const, text: `Test webhook failed (${response.status}): ${errorMessage}` }], isError: true };
       }
 
@@ -743,6 +864,9 @@ async function handleBatch(args: Record<string, unknown>) {
   if (!urls || !Array.isArray(urls) || urls.length === 0) {
     throw new Error("urls array is required (1-50 URLs)");
   }
+  if (urls.length > 50) {
+    throw new Error("Maximum 50 URLs per batch request.");
+  }
 
   const body: Record<string, unknown> = { urls };
   const stringParams = ["format", "device", "hide_selectors", "click_selector", "user_agent"];
@@ -759,7 +883,7 @@ async function handleBatch(args: Record<string, unknown>) {
     if (args[key] !== undefined) body[key] = !!args[key];
   }
 
-  const response = await fetch(`${BASE_URL}/v1/screenshot/batch`, {
+  const response = await fetchWithTimeout(`${BASE_URL}/v1/screenshot/batch`, {
     method: "POST",
     headers: {
       "X-API-Key": API_KEY!,
@@ -769,7 +893,9 @@ async function handleBatch(args: Record<string, unknown>) {
   });
 
   if (!response.ok) {
-    const errorMessage = await parseErrorMessage(response);
+    const raw = await response.text();
+    const errorMessage = sanitizeError(response.status, raw);
+    log("warn", "Batch creation failed", { status: response.status });
     return {
       content: [
         {
@@ -782,11 +908,12 @@ async function handleBatch(args: Record<string, unknown>) {
   }
 
   const data = await response.json() as { jobId: string; status: string; statusUrl: string; total: number };
+  log("info", "Batch job created", { jobId: data.jobId, total: data.total });
   return {
     content: [
       {
         type: "text" as const,
-        text: `Batch job created successfully.\n\nJob ID: ${data.jobId}\nStatus: ${data.status}\nTotal URLs: ${data.total}\n\nUse get_batch_status with job_id="${data.jobId}" to poll for results.`,
+        text: `Batch job created successfully.\n\nJob ID: ${data.jobId}\nStatus: ${data.status}\nTotal URLs: ${data.total}\n\nUse get_batch_status with job_id="${data.jobId}" to poll for results. Wait 2-5 seconds between polls.`,
       },
     ],
   };
@@ -796,12 +923,14 @@ async function handleBatchStatus(args: Record<string, unknown>) {
   const jobId = args.job_id as string;
   if (!jobId) throw new Error("job_id is required");
 
-  const response = await fetch(`${BASE_URL}/v1/screenshot/batch/${jobId}`, {
+  const response = await fetchWithTimeout(`${BASE_URL}/v1/screenshot/batch/${jobId}`, {
     headers: { "X-API-Key": API_KEY! },
   });
 
   if (!response.ok) {
-    const errorMessage = await parseErrorMessage(response);
+    const raw = await response.text();
+    const errorMessage = sanitizeError(response.status, raw);
+    log("warn", "Batch status check failed", { status: response.status });
     return {
       content: [
         {
@@ -832,6 +961,12 @@ async function handleBatchStatus(args: Record<string, unknown>) {
     }
   }
 
+  if (data.status !== "completed" && data.status !== "failed") {
+    lines.push("", "Poll again in 2-5 seconds. Download URLs expire after 24 hours.");
+  } else {
+    lines.push("", "Download URLs expire after 24 hours.");
+  }
+
   return {
     content: [
       {
@@ -847,7 +982,6 @@ async function handleCacheCheck(args: Record<string, unknown>) {
   if (!url) throw new Error("url is required");
 
   const params = new URLSearchParams({ url });
-  // Pass all cache-key-relevant params so the lookup matches correctly
   const strKeys = ["format", "device", "hide_selectors", "click_selector"];
   const intKeys = ["width", "height", "quality"];
   const boolKeys = ["full_page", "dark_mode", "block_ads"];
@@ -855,13 +989,15 @@ async function handleCacheCheck(args: Record<string, unknown>) {
   for (const k of intKeys) { if (args[k] !== undefined) params.set(k, String(args[k])); }
   for (const k of boolKeys) { if (args[k] !== undefined) params.set(k, (args[k] as boolean) ? "true" : "false"); }
 
-  const response = await fetch(
+  const response = await fetchWithTimeout(
     `${BASE_URL}/v1/screenshot/info?${params}`,
     { headers: { "X-API-Key": API_KEY! } }
   );
 
   if (!response.ok) {
-    const errorMessage = await parseErrorMessage(response);
+    const raw = await response.text();
+    const errorMessage = sanitizeError(response.status, raw);
+    log("warn", "Cache check failed", { status: response.status });
     return {
       content: [
         {
@@ -885,12 +1021,14 @@ async function handleCacheCheck(args: Record<string, unknown>) {
 }
 
 async function handleUsage() {
-  const response = await fetch(`${BASE_URL}/v1/usage`, {
+  const response = await fetchWithTimeout(`${BASE_URL}/v1/usage`, {
     headers: { "X-API-Key": API_KEY! },
   });
 
   if (!response.ok) {
-    const errorMessage = await parseErrorMessage(response);
+    const raw = await response.text();
+    const errorMessage = sanitizeError(response.status, raw);
+    log("warn", "Usage check failed", { status: response.status });
     return {
       content: [
         {
@@ -917,3 +1055,4 @@ async function handleUsage() {
 
 const transport = new StdioServerTransport();
 await server.connect(transport);
+log("info", "SnapRender MCP server started");
