@@ -1,7 +1,7 @@
 {
   "manifest_version": "0.2",
   "name": "snaprender",
-  "version": "1.5.2",
+  "version": "1.5.3",
   "description": "Screenshot, extract, and render web pages via the SnapRender API",
   "author": {
     "name": "SnapRender"

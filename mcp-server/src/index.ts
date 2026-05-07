@@ -27,7 +27,7 @@ function log(level: "info" | "warn" | "error", message: string, data?: Record<st
 }
 
 const server = new Server(
-  { name: "snaprender-mcp", version: "1.5.2" },
+  { name: "snaprender-mcp", version: "1.5.3" },
   { capabilities: { tools: {} } }
 );
 
