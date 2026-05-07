@@ -54,9 +54,33 @@ Connect any MCP client directly to the hosted server — zero dependencies, work
 https://app.snap-render.com/mcp
 ```
 
-Uses [Streamable HTTP transport](https://modelcontextprotocol.io/specification/2025-03-26/basic/transports#streamable-http) (MCP spec 2025-03-26). Authenticate via `Authorization: Bearer sk_live_...` or `X-API-Key` header.
+Uses [Streamable HTTP transport](https://modelcontextprotocol.io/specification/2025-03-26/basic/transports#streamable-http) (MCP spec 2025-03-26).
 
-#### Claude Desktop (remote)
+**Authentication options:**
+
+1. **OAuth 2.0** (recommended for MCP clients like Claude Desktop). The server supports OAuth 2.0 Authorization Code with PKCE. Clients that support OAuth will be prompted to sign in automatically.
+2. **API key** via `Authorization: Bearer sk_live_...` or `X-API-Key` header. Works for any HTTP client.
+
+#### Claude Desktop (remote, OAuth)
+
+Claude Desktop handles OAuth automatically. Just add the server URL:
+
+```json
+{
+  "mcpServers": {
+    "snaprender": {
+      "type": "streamable-http",
+      "url": "https://app.snap-render.com/mcp"
+    }
+  }
+}
+```
+
+Claude will open a browser window for you to sign in to your SnapRender account when you first connect.
+
+#### Claude Desktop (remote, API key)
+
+If you prefer to use an API key instead of OAuth:
 
 ```json
 {
@@ -83,7 +107,14 @@ curl -X POST https://app.snap-render.com/mcp \
   -d '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2025-03-26","capabilities":{},"clientInfo":{"name":"test","version":"1.0"}}}'
 ```
 
-The server returns an `Mcp-Session-Id` header — pass it in subsequent requests to reuse the session.
+The server returns an `Mcp-Session-Id` header. Pass it in subsequent requests to reuse the session.
+
+#### OAuth discovery
+
+The server publishes standard OAuth metadata for automatic discovery:
+
+- Authorization server: `https://app.snap-render.com/.well-known/oauth-authorization-server`
+- Protected resource: `https://app.snap-render.com/.well-known/oauth-protected-resource/mcp`
 
 ### Local vs Remote
 

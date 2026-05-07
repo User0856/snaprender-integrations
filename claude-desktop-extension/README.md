@@ -105,21 +105,20 @@ If you prefer manual configuration, add this to your Claude Desktop config:
 }
 ```
 
-Or use the remote server (zero install):
+Or use the remote server (zero install, OAuth sign-in):
 
 ```json
 {
   "mcpServers": {
     "snaprender": {
       "type": "streamable-http",
-      "url": "https://app.snap-render.com/mcp",
-      "headers": {
-        "Authorization": "Bearer sk_live_your_key_here"
-      }
+      "url": "https://app.snap-render.com/mcp"
     }
   }
 }
 ```
+
+Claude Desktop will prompt you to sign in to your SnapRender account via OAuth. You can also use an API key instead by adding `"headers": { "Authorization": "Bearer sk_live_your_key_here" }`.
 
 ## Privacy Policy
 
