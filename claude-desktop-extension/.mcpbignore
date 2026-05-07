@@ -1,0 +1,5 @@
+build.sh
+.mcpbignore
+*.map
+*.d.ts
+tsconfig.json
