@@ -106,14 +106,14 @@ async function testProtocolCompliance(client: Client) {
   }, client);
 
   // 2. Tools list
-  await test("lists all 8 tools", async () => {
+  await test("lists all 11 tools", async () => {
     const { tools } = await client.listTools();
-    assert(tools.length === 8, `expected 8 tools, got ${tools.length}`);
+    assert(tools.length === 11, `expected 11 tools, got ${tools.length}`);
     const names = tools.map(t => t.name).sort();
     const expected = [
-      "batch_screenshots", "check_screenshot_cache", "extract_content",
-      "get_batch_status", "get_usage", "manage_webhooks",
-      "sign_screenshot_url", "take_screenshot",
+      "batch_screenshots", "check_screenshot_cache", "create_webhook",
+      "delete_webhook", "extract_content", "get_batch_status", "get_usage",
+      "list_webhooks", "sign_screenshot_url", "take_screenshot", "test_webhook",
     ];
     assert(JSON.stringify(names) === JSON.stringify(expected), `tool names mismatch: ${names.join(", ")}`);
   }, client);
@@ -151,12 +151,27 @@ async function testProtocolCompliance(client: Client) {
     }
   }, client);
 
-  // 5. manage_webhooks is NOT readOnly
-  await test("manage_webhooks is not readOnly", async () => {
+  // 5. list_webhooks is readOnly, delete_webhook is destructive
+  await test("list_webhooks is readOnly", async () => {
     const { tools } = await client.listTools();
-    const webhooks = tools.find(t => t.name === "manage_webhooks");
-    assert(webhooks, "manage_webhooks tool should exist");
-    assert((webhooks as any).annotations?.readOnlyHint === false, "manage_webhooks should have readOnlyHint=false");
+    const lw = tools.find(t => t.name === "list_webhooks");
+    assert(lw, "list_webhooks tool should exist");
+    assert((lw as any).annotations?.readOnlyHint === true, "list_webhooks should have readOnlyHint=true");
+  }, client);
+
+  await test("delete_webhook is destructive", async () => {
+    const { tools } = await client.listTools();
+    const dw = tools.find(t => t.name === "delete_webhook");
+    assert(dw, "delete_webhook tool should exist");
+    assert((dw as any).annotations?.destructiveHint === true, "delete_webhook should have destructiveHint=true");
+    assert((dw as any).annotations?.readOnlyHint === false, "delete_webhook should have readOnlyHint=false");
+  }, client);
+
+  await test("create_webhook is not readOnly", async () => {
+    const { tools } = await client.listTools();
+    const cw = tools.find(t => t.name === "create_webhook");
+    assert(cw, "create_webhook tool should exist");
+    assert((cw as any).annotations?.readOnlyHint === false, "create_webhook should have readOnlyHint=false");
   }, client);
 }
 
@@ -381,10 +396,10 @@ async function testBatch(client: Client) {
 
 async function testWebhooks(client: Client) {
   // List webhooks
-  await test("manage_webhooks: list returns response", async () => {
+  await test("list_webhooks: returns response", async () => {
     const result = await client.callTool({
-      name: "manage_webhooks",
-      arguments: { action: "list" },
+      name: "list_webhooks",
+      arguments: {},
     });
     assert(!result.isError, `error: ${JSON.stringify(result.content)}`);
     const text = (result.content as any[])[0]?.text;
@@ -392,12 +407,11 @@ async function testWebhooks(client: Client) {
   }, client);
 
   // Create with invalid URL (HTTP, not HTTPS)
-  await test("manage_webhooks: rejects HTTP webhook URL", async () => {
+  await test("create_webhook: rejects HTTP webhook URL", async () => {
     try {
       const result = await client.callTool({
-        name: "manage_webhooks",
+        name: "create_webhook",
         arguments: {
-          action: "create",
           url: "http://example.com/webhook",
           events: ["quota.warning"],
         },
@@ -409,12 +423,11 @@ async function testWebhooks(client: Client) {
   }, client);
 
   // Create with localhost
-  await test("manage_webhooks: rejects localhost webhook URL", async () => {
+  await test("create_webhook: rejects localhost webhook URL", async () => {
     try {
       const result = await client.callTool({
-        name: "manage_webhooks",
+        name: "create_webhook",
         arguments: {
-          action: "create",
           url: "https://localhost:8080/webhook",
           events: ["quota.warning"],
         },
@@ -425,25 +438,25 @@ async function testWebhooks(client: Client) {
     }
   }, client);
 
-  // Missing action
-  await test("manage_webhooks: missing action returns error", async () => {
+  // Delete non-existent
+  await test("delete_webhook: non-existent returns error", async () => {
     try {
       const result = await client.callTool({
-        name: "manage_webhooks",
-        arguments: {},
+        name: "delete_webhook",
+        arguments: { webhook_id: "fake-id-does-not-exist" },
       });
-      assert(result.isError === true, "should error without action");
+      assert(result.isError === true, "should error for non-existent webhook");
     } catch {
       // Remote server throws MCP protocol error
     }
   }, client);
 
-  // Delete non-existent
-  await test("manage_webhooks: delete non-existent returns error", async () => {
+  // Test non-existent webhook
+  await test("test_webhook: non-existent returns error", async () => {
     try {
       const result = await client.callTool({
-        name: "manage_webhooks",
-        arguments: { action: "delete", webhook_id: "fake-id-does-not-exist" },
+        name: "test_webhook",
+        arguments: { webhook_id: "fake-id-does-not-exist" },
       });
       assert(result.isError === true, "should error for non-existent webhook");
     } catch {
@@ -535,7 +548,7 @@ async function runSuite(transportName: string, clientFactory: () => Promise<Clie
   console.log("\n  Batch (batch_screenshots + get_batch_status):");
   await testBatch(client);
 
-  console.log("\n  Webhooks (manage_webhooks):");
+  console.log("\n  Webhooks (list/create/delete/test_webhook):");
   await testWebhooks(client);
 
   console.log("\n  Error Handling:");

@@ -27,7 +27,7 @@ function log(level: "info" | "warn" | "error", message: string, data?: Record<st
 }
 
 const server = new Server(
-  { name: "snaprender-mcp", version: "1.5.3" },
+  { name: "snaprender-mcp", version: "1.5.4" },
   { capabilities: { tools: {} } }
 );
 
@@ -313,7 +313,7 @@ const TOOLS = [
       "All URLs share the same screenshot options. Each URL consumes one credit; failed URLs get credits rolled back.",
     annotations: {
       title: "Batch Screenshots",
-      readOnlyHint: true,
+      readOnlyHint: false,
       destructiveHint: false,
       openWorldHint: true,
     },
@@ -385,13 +385,29 @@ const TOOLS = [
     },
   },
   {
-    name: "manage_webhooks",
+    name: "list_webhooks",
     description:
-      "Create, list, or delete webhooks for event notifications. " +
-      "Events: screenshot.completed (batch job done), quota.warning (80% used), quota.exceeded (100% used). " +
-      "Max 5 webhooks per account. Payloads are signed with HMAC-SHA256.",
+      "List all webhook subscriptions on your account. " +
+      "Returns webhook IDs, URLs, subscribed events, and creation dates.",
     annotations: {
-      title: "Manage Webhooks",
+      title: "List Webhooks",
+      readOnlyHint: true,
+      destructiveHint: false,
+      openWorldHint: false,
+    },
+    inputSchema: {
+      type: "object" as const,
+      properties: {},
+    },
+  },
+  {
+    name: "create_webhook",
+    description:
+      "Create a webhook subscription for event notifications. " +
+      "Events: screenshot.completed (batch job done), quota.warning (80% used), quota.exceeded (100% used). " +
+      "Max 5 webhooks per account. Payloads are signed with HMAC-SHA256. Save the returned secret to verify signatures.",
+    annotations: {
+      title: "Create Webhook",
       readOnlyHint: false,
       destructiveHint: false,
       openWorldHint: true,
@@ -399,26 +415,59 @@ const TOOLS = [
     inputSchema: {
       type: "object" as const,
       properties: {
-        action: {
-          type: "string",
-          enum: ["create", "list", "delete", "test"],
-          description: "Action to perform",
-        },
         url: {
           type: "string",
-          description: "Webhook endpoint URL (required for 'create'). Must be a public HTTPS URL.",
+          description: "Webhook endpoint URL. Must be a public HTTPS URL.",
         },
         events: {
           type: "array",
           items: { type: "string", enum: ["screenshot.completed", "quota.warning", "quota.exceeded"] },
-          description: "Events to subscribe to (required for 'create')",
-        },
-        webhook_id: {
-          type: "string",
-          description: "Webhook ID (required for 'delete' and 'test')",
+          description: "Events to subscribe to",
         },
       },
-      required: ["action"],
+      required: ["url", "events"],
+    },
+  },
+  {
+    name: "delete_webhook",
+    description: "Delete a webhook subscription by ID. This cannot be undone.",
+    annotations: {
+      title: "Delete Webhook",
+      readOnlyHint: false,
+      destructiveHint: true,
+      openWorldHint: false,
+    },
+    inputSchema: {
+      type: "object" as const,
+      properties: {
+        webhook_id: {
+          type: "string",
+          description: "The webhook ID to delete (from list_webhooks)",
+        },
+      },
+      required: ["webhook_id"],
+    },
+  },
+  {
+    name: "test_webhook",
+    description:
+      "Send a test payload to a webhook endpoint to verify it receives events correctly. " +
+      "Returns the delivery status and HTTP response code.",
+    annotations: {
+      title: "Test Webhook",
+      readOnlyHint: false,
+      destructiveHint: false,
+      openWorldHint: true,
+    },
+    inputSchema: {
+      type: "object" as const,
+      properties: {
+        webhook_id: {
+          type: "string",
+          description: "The webhook ID to test (from list_webhooks)",
+        },
+      },
+      required: ["webhook_id"],
     },
   },
   {
@@ -503,8 +552,14 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         return await handleBatch(args as Record<string, unknown>);
       case "get_batch_status":
         return await handleBatchStatus(args as Record<string, unknown>);
-      case "manage_webhooks":
-        return await handleWebhooks(args as Record<string, unknown>);
+      case "list_webhooks":
+        return await handleListWebhooks();
+      case "create_webhook":
+        return await handleCreateWebhook(args as Record<string, unknown>);
+      case "delete_webhook":
+        return await handleDeleteWebhook(args as Record<string, unknown>);
+      case "test_webhook":
+        return await handleTestWebhook(args as Record<string, unknown>);
       case "get_usage":
         return await handleUsage();
       default:
@@ -756,107 +811,97 @@ async function handleExtract(args: Record<string, unknown>) {
   };
 }
 
-async function handleWebhooks(args: Record<string, unknown>) {
-  const action = args.action as string;
-  if (!action) throw new Error("action is required");
+async function handleListWebhooks() {
+  const response = await fetchWithTimeout(`${BASE_URL}/v1/webhooks`, {
+    headers: { "X-API-Key": API_KEY! },
+  });
 
-  switch (action) {
-    case "create": {
-      const url = args.url as string;
-      const events = args.events as string[];
-      if (!url) throw new Error("url is required for create");
-      if (!events || events.length === 0) throw new Error("events array is required for create");
-
-      const urlError = validateWebhookUrl(url);
-      if (urlError) throw new Error(urlError);
-
-      const response = await fetchWithTimeout(`${BASE_URL}/v1/webhooks`, {
-        method: "POST",
-        headers: { "X-API-Key": API_KEY!, "Content-Type": "application/json" },
-        body: JSON.stringify({ url, events }),
-      });
-
-      if (!response.ok) {
-        const raw = await response.text();
-        const errorMessage = sanitizeError(response.status, raw);
-        log("warn", "Webhook creation failed", { status: response.status });
-        return { content: [{ type: "text" as const, text: `Webhook creation failed (${response.status}): ${errorMessage}` }], isError: true };
-      }
-
-      const data = await response.json() as { id: string; url: string; events: string[]; secret: string };
-      log("info", "Webhook created", { webhookId: data.id });
-      return {
-        content: [{
-          type: "text" as const,
-          text: `Webhook created successfully.\n\nID: ${data.id}\nURL: ${data.url}\nEvents: ${data.events.join(", ")}\nSecret: ${data.secret}\n\nSave the secret to verify webhook signatures. It won't be shown again in full.`,
-        }],
-      };
-    }
-
-    case "list": {
-      const response = await fetchWithTimeout(`${BASE_URL}/v1/webhooks`, {
-        headers: { "X-API-Key": API_KEY! },
-      });
-
-      if (!response.ok) {
-        const raw = await response.text();
-        const errorMessage = sanitizeError(response.status, raw);
-        log("warn", "List webhooks failed", { status: response.status });
-        return { content: [{ type: "text" as const, text: `List webhooks failed (${response.status}): ${errorMessage}` }], isError: true };
-      }
-
-      const data = await response.json();
-      return { content: [{ type: "text" as const, text: JSON.stringify(data, null, 2) }] };
-    }
-
-    case "delete": {
-      const webhookId = args.webhook_id as string;
-      if (!webhookId) throw new Error("webhook_id is required for delete");
-
-      const response = await fetchWithTimeout(`${BASE_URL}/v1/webhooks/${webhookId}`, {
-        method: "DELETE",
-        headers: { "X-API-Key": API_KEY! },
-      });
-
-      if (!response.ok && response.status !== 204) {
-        const raw = await response.text();
-        const errorMessage = sanitizeError(response.status, raw);
-        log("warn", "Delete webhook failed", { status: response.status });
-        return { content: [{ type: "text" as const, text: `Delete webhook failed (${response.status}): ${errorMessage}` }], isError: true };
-      }
-
-      log("info", "Webhook deleted", { webhookId });
-      return { content: [{ type: "text" as const, text: `Webhook ${webhookId} deleted successfully.` }] };
-    }
-
-    case "test": {
-      const webhookId = args.webhook_id as string;
-      if (!webhookId) throw new Error("webhook_id is required for test");
-
-      const response = await fetchWithTimeout(`${BASE_URL}/v1/webhooks/${webhookId}/test`, {
-        method: "POST",
-        headers: { "X-API-Key": API_KEY! },
-      });
-
-      if (!response.ok) {
-        const raw = await response.text();
-        const errorMessage = sanitizeError(response.status, raw);
-        log("warn", "Test webhook failed", { status: response.status });
-        return { content: [{ type: "text" as const, text: `Test webhook failed (${response.status}): ${errorMessage}` }], isError: true };
-      }
-
-      const data = await response.json() as { deliveryId: string; statusCode: number | null; success: boolean };
-      return {
-        content: [{
-          type: "text" as const,
-          text: `Test delivery sent.\n\nDelivery ID: ${data.deliveryId}\nStatus Code: ${data.statusCode ?? "N/A (timeout)"}\nSuccess: ${data.success}`,
-        }],
-      };
-    }
-
-    default:
-      throw new Error(`Unknown action: ${action}. Use create, list, delete, or test.`);
+  if (!response.ok) {
+    const raw = await response.text();
+    const errorMessage = sanitizeError(response.status, raw);
+    log("warn", "List webhooks failed", { status: response.status });
+    return { content: [{ type: "text" as const, text: `List webhooks failed (${response.status}): ${errorMessage}` }], isError: true };
   }
+
+  const data = await response.json();
+  return { content: [{ type: "text" as const, text: JSON.stringify(data, null, 2) }] };
+}
+
+async function handleCreateWebhook(args: Record<string, unknown>) {
+  const url = args.url as string;
+  const events = args.events as string[];
+  if (!url) throw new Error("url is required");
+  if (!events || events.length === 0) throw new Error("events array is required");
+
+  const urlError = validateWebhookUrl(url);
+  if (urlError) throw new Error(urlError);
+
+  const response = await fetchWithTimeout(`${BASE_URL}/v1/webhooks`, {
+    method: "POST",
+    headers: { "X-API-Key": API_KEY!, "Content-Type": "application/json" },
+    body: JSON.stringify({ url, events }),
+  });
+
+  if (!response.ok) {
+    const raw = await response.text();
+    const errorMessage = sanitizeError(response.status, raw);
+    log("warn", "Webhook creation failed", { status: response.status });
+    return { content: [{ type: "text" as const, text: `Webhook creation failed (${response.status}): ${errorMessage}` }], isError: true };
+  }
+
+  const data = await response.json() as { id: string; url: string; events: string[]; secret: string };
+  log("info", "Webhook created", { webhookId: data.id });
+  return {
+    content: [{
+      type: "text" as const,
+      text: `Webhook created successfully.\n\nID: ${data.id}\nURL: ${data.url}\nEvents: ${data.events.join(", ")}\nSecret: ${data.secret}\n\nSave the secret to verify webhook signatures. It won't be shown again in full.`,
+    }],
+  };
+}
+
+async function handleDeleteWebhook(args: Record<string, unknown>) {
+  const webhookId = args.webhook_id as string;
+  if (!webhookId) throw new Error("webhook_id is required");
+
+  const response = await fetchWithTimeout(`${BASE_URL}/v1/webhooks/${webhookId}`, {
+    method: "DELETE",
+    headers: { "X-API-Key": API_KEY! },
+  });
+
+  if (!response.ok && response.status !== 204) {
+    const raw = await response.text();
+    const errorMessage = sanitizeError(response.status, raw);
+    log("warn", "Delete webhook failed", { status: response.status });
+    return { content: [{ type: "text" as const, text: `Delete webhook failed (${response.status}): ${errorMessage}` }], isError: true };
+  }
+
+  log("info", "Webhook deleted", { webhookId });
+  return { content: [{ type: "text" as const, text: `Webhook ${webhookId} deleted successfully.` }] };
+}
+
+async function handleTestWebhook(args: Record<string, unknown>) {
+  const webhookId = args.webhook_id as string;
+  if (!webhookId) throw new Error("webhook_id is required");
+
+  const response = await fetchWithTimeout(`${BASE_URL}/v1/webhooks/${webhookId}/test`, {
+    method: "POST",
+    headers: { "X-API-Key": API_KEY! },
+  });
+
+  if (!response.ok) {
+    const raw = await response.text();
+    const errorMessage = sanitizeError(response.status, raw);
+    log("warn", "Test webhook failed", { status: response.status });
+    return { content: [{ type: "text" as const, text: `Test webhook failed (${response.status}): ${errorMessage}` }], isError: true };
+  }
+
+  const data = await response.json() as { deliveryId: string; statusCode: number | null; success: boolean };
+  return {
+    content: [{
+      type: "text" as const,
+      text: `Test delivery sent.\n\nDelivery ID: ${data.deliveryId}\nStatus Code: ${data.statusCode ?? "N/A (timeout)"}\nSuccess: ${data.success}`,
+    }],
+  };
 }
 
 async function handleBatch(args: Record<string, unknown>) {

@@ -94,13 +94,12 @@ The server returns an `Mcp-Session-Id` header — pass it in subsequent requests
 | **Latency** | Slightly lower (local process) | Slightly higher (network hop) |
 | **Use case** | Claude Desktop, Claude Code | Any MCP client, Smithery, web apps |
 
-## Tools
+## Tools (11 total)
 
 ### `take_screenshot`
 
 Capture a screenshot of any website.
 
-**Parameters:**
 | Parameter | Type | Required | Description |
 |-----------|------|----------|-------------|
 | `url` | string | Yes | URL to capture |
@@ -117,6 +116,44 @@ Capture a screenshot of any website.
 | `hide_selectors` | string | No | Comma-separated CSS selectors to hide |
 | `click_selector` | string | No | CSS selector to click before capture |
 
+### `extract_content`
+
+Extract content from a web page as markdown, text, HTML, links, or metadata.
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `url` | string | Yes | URL to extract from |
+| `type` | string | No | `markdown`, `text`, `html`, `article`, `links`, or `metadata` (default: `markdown`) |
+
+### `batch_screenshots`
+
+Capture up to 50 URLs in a single batch job. Returns a job ID for polling.
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `urls` | string[] | Yes | Array of URLs (max 50) |
+| `format` | string | No | Output format (default: `png`) |
+| `width` | integer | No | Viewport width |
+| `height` | integer | No | Viewport height |
+
+### `get_batch_status`
+
+Poll a batch job for completion status and download URLs.
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `job_id` | string | Yes | Batch job ID from `batch_screenshots` |
+
+### `sign_screenshot_url`
+
+Generate a signed URL that renders a screenshot when visited. No API key needed to use the URL.
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `url` | string | Yes | URL to screenshot |
+| `expires_in` | integer | No | Expiry in seconds (default: 86400) |
+| `format` | string | No | Output format |
+
 ### `check_screenshot_cache`
 
 Check if a screenshot is cached without capturing.
@@ -125,6 +162,35 @@ Check if a screenshot is cached without capturing.
 |-----------|------|----------|-------------|
 | `url` | string | Yes | URL to check |
 | `format` | string | No | Output format |
+
+### `list_webhooks`
+
+List all webhook subscriptions for your account. Read-only.
+
+### `create_webhook`
+
+Create a new webhook subscription.
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `url` | string | Yes | HTTPS webhook endpoint URL |
+| `events` | string[] | Yes | Events: `screenshot.completed`, `quota.warning`, `quota.exceeded` |
+
+### `delete_webhook`
+
+Delete a webhook subscription. Destructive.
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `webhook_id` | string | Yes | ID of the webhook to delete |
+
+### `test_webhook`
+
+Send a test event to a webhook endpoint to verify delivery.
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `webhook_id` | string | Yes | ID of the webhook to test |
 
 ### `get_usage`
 

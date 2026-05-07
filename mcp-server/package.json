@@ -1,6 +1,6 @@
 {
   "name": "snaprender-mcp",
-  "version": "1.5.3",
+  "version": "1.5.4",
   "mcpName": "io.github.User0856/snaprender",
   "description": "MCP server for SnapRender Screenshot API — lets AI agents capture website screenshots",
   "type": "module",

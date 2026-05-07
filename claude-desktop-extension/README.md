@@ -53,9 +53,21 @@ Generate a signed URL that renders a screenshot when visited. Works without an A
 
 Check if a screenshot is already cached (does not use quota).
 
-### manage_webhooks
+### list_webhooks
 
-Create, list, delete, or test webhook subscriptions. Events: screenshot.completed, quota.warning, quota.exceeded.
+List all webhook subscriptions for your account (read-only).
+
+### create_webhook
+
+Create a new webhook subscription for events: screenshot.completed, quota.warning, quota.exceeded.
+
+### delete_webhook
+
+Delete a webhook subscription by ID.
+
+### test_webhook
+
+Send a test event to a webhook endpoint to verify delivery.
 
 ### get_usage
 
