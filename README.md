@@ -5,6 +5,7 @@
 [![npm SDK](https://img.shields.io/npm/v/snaprender?label=Node.js%20SDK)](https://www.npmjs.com/package/snaprender)
 [![PyPI SDK](https://img.shields.io/pypi/v/snaprender?label=Python%20SDK)](https://pypi.org/project/snaprender/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](./LICENSE)
+[![Available on CodeGuilds](https://img.shields.io/badge/Available_on-CodeGuilds-6366f1)](https://codeguilds.dev/packages/snaprender-integrations)
 
 Official integrations for [SnapRender Screenshot API](https://snap-render.com) — capture screenshots of any website as PNG, JPEG, WebP, or PDF.
 
@@ -176,7 +177,6 @@ Sign up free at [snap-render.com](https://snap-render.com/auth/signup) — 200 s
 - [n8n Community Node](https://www.npmjs.com/package/n8n-nodes-snaprender) (`npm install n8n-nodes-snaprender`)
 - [OpenAPI Spec](./chatgpt-actions/openapi.json)
 - [Postman Collection](./postman/snaprender-postman-collection.json)
-- [![Available on CodeGuilds](https://img.shields.io/badge/Available_on-CodeGuilds-6366f1)](https://codeguilds.dev/packages/snaprender-integrations)
 
 ## License
 
