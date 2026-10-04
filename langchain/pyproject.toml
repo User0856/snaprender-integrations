@@ -4,8 +4,8 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "langchain-snaprender"
-version = "0.1.0"
-description = "LangChain tools for SnapRender Screenshot API — capture websites as PNG, JPEG, WebP, or PDF"
+version = "0.1.1"
+description = "LangChain tools for SnapRender Screenshot API: capture websites as PNG, JPEG, WebP, or PDF"
 readme = "README.md"
 license = "MIT"
 requires-python = ">=3.9"
