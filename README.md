@@ -6,6 +6,7 @@
 [![PyPI SDK](https://img.shields.io/pypi/v/snaprender?label=Python%20SDK)](https://pypi.org/project/snaprender/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](./LICENSE)
 [![Available on CodeGuilds](https://img.shields.io/badge/Available_on-CodeGuilds-6366f1)](https://codeguilds.dev/packages/snaprender-integrations)
+[![MCP Badge](https://lobehub.com/badge/mcp/user0856-snaprender-integrations)](https://lobehub.com/mcp/user0856-snaprender-integrations)
 
 Official integrations for [SnapRender Screenshot API](https://snap-render.com) — capture screenshots of any website as PNG, JPEG, WebP, or PDF.
 
