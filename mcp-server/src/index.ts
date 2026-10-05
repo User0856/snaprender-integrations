@@ -27,7 +27,7 @@ function log(level: "info" | "warn" | "error", message: string, data?: Record<st
 }
 
 const server = new Server(
-  { name: "snaprender-mcp", version: "1.5.4" },
+  { name: "snaprender-mcp", version: "1.5.5" },
   { capabilities: { tools: {} } }
 );
 
@@ -404,7 +404,8 @@ const TOOLS = [
     name: "create_webhook",
     description:
       "Create a webhook subscription for event notifications. " +
-      "Events: screenshot.completed (batch job done), quota.warning (80% used), quota.exceeded (100% used). " +
+      "Events: screenshot.completed (batch job done), quota.warning (80% used), quota.exceeded (100% used), " +
+      "capture.completed and change.detected (scheduled captures). " +
       "Max 5 webhooks per account. Payloads are signed with HMAC-SHA256. Save the returned secret to verify signatures.",
     annotations: {
       title: "Create Webhook",
@@ -421,7 +422,7 @@ const TOOLS = [
         },
         events: {
           type: "array",
-          items: { type: "string", enum: ["screenshot.completed", "quota.warning", "quota.exceeded"] },
+          items: { type: "string", enum: ["screenshot.completed", "quota.warning", "quota.exceeded", "capture.completed", "change.detected"] },
           description: "Events to subscribe to",
         },
       },

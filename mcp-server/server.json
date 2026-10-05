@@ -1,38 +1,36 @@
 {
   "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
   "name": "io.github.User0856/snaprender",
-  "description": "Screenshot, extract content, and render web pages. PNG/JPEG/WebP/PDF, batch, signed URLs.",
+  "title": "SnapRender",
+  "description": "Screenshot any URL as PNG, JPEG, WebP or PDF, extract content, batch. Hosted with OAuth or local.",
+  "websiteUrl": "https://snap-render.com",
   "repository": {
     "url": "https://github.com/User0856/snaprender-integrations",
     "source": "github"
   },
-  "version": "1.5.4",
+  "version": "1.5.5",
   "packages": [
     {
       "registryType": "npm",
       "identifier": "snaprender-mcp",
-      "version": "1.5.4",
+      "version": "1.5.5",
       "transport": {
         "type": "stdio"
       },
       "environmentVariables": [
         {
           "name": "SNAPRENDER_API_KEY",
-          "description": "Your SnapRender API key (starts with sk_live_). Get one free at https://snap-render.com/auth/signup",
-          "required": true
+          "description": "Your SnapRender API key (starts with sk_live_). Get one free at https://snap-render.com",
+          "isRequired": true,
+          "isSecret": true
         }
       ]
     }
   ],
-  "remoteEndpoints": [
+  "remotes": [
     {
-      "url": "https://app.snap-render.com/mcp",
-      "transport": {
-        "type": "streamable-http"
-      },
-      "auth": {
-        "type": "oauth2"
-      }
+      "type": "streamable-http",
+      "url": "https://app.snap-render.com/mcp"
     }
   ]
 }
