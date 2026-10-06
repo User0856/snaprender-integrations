@@ -1,5 +1,6 @@
 # SnapRender Integrations
 
+[![SnapRender MCP connector: tool definition quality and endpoint health on Glama](https://glama.ai/mcp/connectors/com.snap-render.app/snap-render/badges/score.svg)](https://glama.ai/mcp/connectors/com.snap-render.app/snap-render)
 [![smithery badge](https://smithery.ai/badge/snaprender/snaprender)](https://smithery.ai/server/snaprender/snaprender)
 [![npm MCP](https://img.shields.io/npm/v/snaprender-mcp?label=MCP%20Server)](https://www.npmjs.com/package/snaprender-mcp)
 [![npm SDK](https://img.shields.io/npm/v/snaprender?label=Node.js%20SDK)](https://www.npmjs.com/package/snaprender)
@@ -8,28 +9,37 @@
 [![Available on CodeGuilds](https://img.shields.io/badge/Available_on-CodeGuilds-6366f1)](https://codeguilds.dev/packages/snaprender-integrations)
 [![MCP Badge](https://lobehub.com/badge/mcp/user0856-snaprender-integrations)](https://lobehub.com/mcp/user0856-snaprender-integrations)
 
-Official integrations for [SnapRender Screenshot API](https://snap-render.com) — capture screenshots of any website as PNG, JPEG, WebP, or PDF.
+Official integrations for the [SnapRender Screenshot API](https://snap-render.com): give AI agents eyes. Capture any public web page as PNG, JPEG, WebP or PDF, or read it as clean markdown.
 
-## Remote MCP Server
+## Remote MCP Server (recommended)
 
-SnapRender runs a hosted MCP server — connect from any MCP client with zero install:
+SnapRender runs a hosted MCP server. Connect from any MCP client with nothing to install:
 
 ```
 https://app.snap-render.com/mcp
 ```
 
-- **Transport:** [Streamable HTTP](https://modelcontextprotocol.io/specification/2025-03-26/basic/transports#streamable-http) (MCP spec 2025-03-26)
-- **Auth:** `X-API-Key` header or `Authorization: Bearer` header
-- **Tools:** `take_screenshot`, `check_screenshot_cache`, `get_usage`
+- **Transport:** [Streamable HTTP](https://modelcontextprotocol.io/specification/2025-03-26/basic/transports#streamable-http)
+- **Sign in:** OAuth 2.0 (the client opens a SnapRender sign-in window; Google, GitHub or email), or an API key in the `Authorization: Bearer` or `X-API-Key` header
+- **Tools (11):** capture, cache check, usage, signed links, content extraction, batches and webhooks ([full list below](#mcp-tools))
 - **Prompts:** `screenshot_website`, `compare_devices`
+- **Free plan:** 200 screenshots a month, no credit card
+- **Directory listing:** [SnapRender on Glama](https://glama.ai/mcp/connectors/com.snap-render.app/snap-render) (health-checked, tool quality graded)
 
-### Claude Desktop (remote — recommended)
+### Claude (claude.ai and Claude Desktop)
+
+Open Customize, then Connectors, click + Add, then Add custom connector, and paste `https://app.snap-render.com/mcp`. Claude opens a SnapRender sign-in window; approve it and the tools are ready. Step-by-step guide: [snap-render.com/claude](https://snap-render.com/claude).
+
+### Cursor, VS Code, Windsurf and other clients
+
+Setup pages for each client, with one-click install where the client supports it: [snap-render.com/ai-connectors](https://snap-render.com/ai-connectors).
+
+A client that takes headers instead of OAuth:
 
 ```json
 {
   "mcpServers": {
     "snaprender": {
-      "type": "streamable-http",
       "url": "https://app.snap-render.com/mcp",
       "headers": {
         "Authorization": "Bearer sk_live_your_key_here"
@@ -50,7 +60,7 @@ curl -X POST https://app.snap-render.com/mcp \
   -d '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2025-03-26","capabilities":{},"clientInfo":{"name":"test","version":"1.0"}}}'
 ```
 
-The server returns an `Mcp-Session-Id` header — include it in subsequent requests to reuse the session.
+The server returns an `Mcp-Session-Id` header: include it in later requests to reuse the session.
 
 ### Smithery
 
@@ -80,48 +90,28 @@ See [mcp-server/](./mcp-server/) for full documentation.
 
 | | Remote (hosted) | Local (`npx`) |
 |---|---|---|
-| **Install** | None — just an HTTPS URL | Requires Node.js + npx |
+| **Install** | None, just an HTTPS URL | Requires Node.js + npx |
 | **Transport** | Streamable HTTP | stdio |
-| **Use case** | Any MCP client, Smithery, web apps | Claude Desktop, Claude Code |
+| **Sign in** | OAuth or API key | API key (`SNAPRENDER_API_KEY`) |
+| **Use case** | Claude, ChatGPT, Cursor, any MCP client | Clients that only run local servers |
 
 ## MCP Tools
 
-### `take_screenshot`
+The hosted server and the npm package expose the same 11 tools. Parameters are documented in each tool's schema and in the [API docs](https://snap-render.com/docs#mcp-server).
 
-Capture a screenshot of any website. Returns the image as PNG, JPEG, WebP, or PDF.
-
-| Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
-| `url` | string | Yes | URL to capture (http:// or https://) |
-| `format` | string | No | `png`, `jpeg`, `webp`, or `pdf` (default: `png`) |
-| `width` | integer | No | Viewport width 320-3840 (default: 1280) |
-| `height` | integer | No | Viewport height 200-10000 (default: 800) |
-| `full_page` | boolean | No | Capture entire scrollable page |
-| `device` | string | No | `iphone_14`, `iphone_15_pro`, `pixel_7`, `ipad_pro`, `macbook_pro` |
-| `dark_mode` | boolean | No | Enable dark mode |
-| `block_ads` | boolean | No | Block ads (default: true) |
-| `block_cookie_banners` | boolean | No | Remove cookie banners (default: true) |
-| `quality` | integer | No | JPEG/WebP quality 1-100 (default: 90) |
-| `delay` | integer | No | Wait ms after page load (default: 0) |
-| `hide_selectors` | string | No | Comma-separated CSS selectors to hide |
-| `click_selector` | string | No | CSS selector to click before capture |
-
-### `check_screenshot_cache`
-
-Check if a screenshot is cached without capturing. Does not count against quota.
-
-| Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
-| `url` | string | Yes | URL to check |
-| `format` | string | No | Output format (default: `png`) |
-
-### `get_usage`
-
-Get screenshot usage statistics.
-
-| Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
-| `month` | string | No | Month in `YYYY-MM` format (default: current month) |
+| Tool | What it does | Cost |
+|------|--------------|------|
+| `take_screenshot` | Capture a URL as PNG, JPEG, WebP or PDF: device presets, full page, dark mode, ad and cookie banner removal, hide or click selectors | 1 capture (cached copies free) |
+| `check_screenshot_cache` | Check whether a capture with these options is already cached | Free |
+| `get_usage` | Captures used and left this month, the limit and the reset date | Free |
+| `sign_screenshot_url` | Create a signed link that renders a screenshot when opened, no API key needed | 1 capture when opened |
+| `extract_content` | Read a page as markdown, text, HTML, article, links or metadata | 1 capture (failures free) |
+| `batch_screenshots` | Capture up to 50 URLs in one background job | 1 capture per URL (failures refunded) |
+| `get_batch_status` | Poll a batch job and get its download links | Free |
+| `list_webhooks` | List webhook subscriptions | Free |
+| `create_webhook` | Get notified when a batch finishes, the quota runs low, or a scheduled capture changes | Free |
+| `delete_webhook` | Delete a webhook subscription | Free |
+| `test_webhook` | Send a test payload to a webhook | Free |
 
 ## Agent Framework Integrations
 
@@ -161,12 +151,13 @@ curl "https://app.snap-render.com/v1/screenshot?url=https://example.com" \
 
 ## Get an API Key
 
-Sign up free at [snap-render.com](https://snap-render.com/auth/signup) — 200 screenshots/month, no credit card required.
+Sign up free at [snap-render.com](https://snap-render.com/auth/signup): 200 screenshots a month, no credit card required.
 
 ## Links
 
-- [Documentation](https://snap-render.com)
-- [Remote MCP Server](https://app.snap-render.com/mcp) — Streamable HTTP endpoint
+- [Documentation](https://snap-render.com/docs)
+- [Remote MCP Server](https://app.snap-render.com/mcp): Streamable HTTP endpoint
+- [MCP Connector on Glama](https://glama.ai/mcp/connectors/com.snap-render.app/snap-render)
 - [MCP Server on npm](https://www.npmjs.com/package/snaprender-mcp) (`npx snaprender-mcp`)
 - [MCP Server on Smithery](https://smithery.ai/server/snaprender/snaprender)
 - [Node.js SDK](https://www.npmjs.com/package/snaprender) (`npm install snaprender`)
