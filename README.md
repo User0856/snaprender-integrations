@@ -1,3 +1,12 @@
+<p align="center">
+  <a href="https://snap-render.com">
+    <picture>
+      <source media="(prefers-color-scheme: dark)" srcset="https://snap-render.com/brand/snaprender-lockup-dark.png">
+      <img src="https://snap-render.com/brand/snaprender-lockup-light.png" alt="SnapRender" width="320">
+    </picture>
+  </a>
+</p>
+
 # SnapRender Integrations
 
 [![SnapRender MCP connector: tool definition quality and endpoint health on Glama](https://glama.ai/mcp/connectors/com.snap-render.app/snap-render/badges/score.svg)](https://glama.ai/mcp/connectors/com.snap-render.app/snap-render)

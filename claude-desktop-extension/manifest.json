@@ -6,12 +6,15 @@
   "author": {
     "name": "SnapRender"
   },
+  "icon": "icon.png",
   "server": {
     "type": "node",
     "entry_point": "server/index.js",
     "mcp_config": {
       "command": "node",
-      "args": ["${__dirname}/server/index.js"],
+      "args": [
+        "${__dirname}/server/index.js"
+      ],
       "env": {
         "SNAPRENDER_API_KEY": "${user_config.api_key}"
       }
