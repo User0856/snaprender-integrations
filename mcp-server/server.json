@@ -2,18 +2,18 @@
   "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
   "name": "io.github.User0856/snaprender",
   "title": "SnapRender",
-  "description": "Screenshot any URL as PNG, JPEG, WebP or PDF, extract content, batch. Hosted with OAuth or local.",
+  "description": "Local stdio MCP server for SnapRender screenshots. Hosted version: com.snap-render.app/snap-render",
   "websiteUrl": "https://snap-render.com",
   "repository": {
     "url": "https://github.com/User0856/snaprender-integrations",
     "source": "github"
   },
-  "version": "1.5.5",
+  "version": "1.5.7",
   "packages": [
     {
       "registryType": "npm",
       "identifier": "snaprender-mcp",
-      "version": "1.5.5",
+      "version": "1.5.6",
       "transport": {
         "type": "stdio"
       },
@@ -27,10 +27,13 @@
       ]
     }
   ],
-  "remotes": [
+  "icons": [
     {
-      "type": "streamable-http",
-      "url": "https://app.snap-render.com/mcp"
+      "src": "https://snap-render.com/android-chrome-512x512.png",
+      "mimeType": "image/png",
+      "sizes": [
+        "512x512"
+      ]
     }
   ]
 }
