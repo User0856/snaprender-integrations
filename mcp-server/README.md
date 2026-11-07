@@ -1,6 +1,6 @@
 # snaprender-mcp
 
-[![smithery badge](https://smithery.ai/badge/snaprender/snaprender)](https://smithery.ai/server/snaprender/snaprender)
+[![LightNow capabilities](https://lightnow.ai/badge/io.github.User0856/snaprender)](https://lightnow.ai/servers/io.github.User0856/snaprender)
 [![npm](https://img.shields.io/npm/v/snaprender-mcp)](https://www.npmjs.com/package/snaprender-mcp)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](../LICENSE)
 
