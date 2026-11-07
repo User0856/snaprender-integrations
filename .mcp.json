@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "snaprender": {
+      "command": "npx",
+      "args": ["-y", "snaprender-mcp"],
+      "env": {
+        "SNAPRENDER_API_KEY": "${SNAPRENDER_API_KEY}"
+      }
+    }
+  }
+}
