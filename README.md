@@ -131,6 +131,7 @@ The hosted server and the npm package expose the same 11 tools. Parameters are d
 | [CrewAI](./crewai/) | `crewai/` | `BaseTool` subclasses for CrewAI agents ([PyPI](https://pypi.org/project/crewai-snaprender/)) |
 | [AutoGen](./autogen/) | `autogen/` | `FunctionTool` wrappers for Microsoft AutoGen agents ([PyPI](https://pypi.org/project/autogen-ext-snaprender/)) |
 | [n8n](https://github.com/User0856/n8n-nodes-snaprender) | Separate repo | Community node for n8n workflows ([npm](https://www.npmjs.com/package/n8n-nodes-snaprender)) |
+| [Activepieces](./activepieces/) | `activepieces/` | Piece for self-hosted Activepieces, installed from Platform Admin > Pieces ([npm](https://www.npmjs.com/package/activepieces-piece-snaprender)) |
 
 ## Other Integrations
 
@@ -176,6 +177,7 @@ Sign up free at [snap-render.com](https://snap-render.com/auth/signup): 200 scre
 - [CrewAI Tool](https://pypi.org/project/crewai-snaprender/) (`pip install crewai-snaprender`)
 - [AutoGen Tool](https://pypi.org/project/autogen-ext-snaprender/) (`pip install autogen-ext-snaprender`)
 - [n8n Community Node](https://www.npmjs.com/package/n8n-nodes-snaprender) (`npm install n8n-nodes-snaprender`)
+- [Activepieces Piece](https://www.npmjs.com/package/activepieces-piece-snaprender) (`activepieces-piece-snaprender`)
 - [OpenAPI Spec](./chatgpt-actions/openapi.json)
 - [Postman Collection](./postman/snaprender-postman-collection.json)
 
