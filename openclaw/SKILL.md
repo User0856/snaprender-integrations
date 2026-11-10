@@ -85,14 +85,14 @@ jq -n --arg url 'TARGET_URL' '{url: $url, type: "markdown", max_length: 20000}' 
 SnapRender can capture a page on a schedule and compare each capture with the previous one, so nothing has to keep running on your side:
 
 ```bash
-jq -n --arg url 'TARGET_URL' '{url: $url, interval: "daily", change_threshold: 0.5, notify_email: true}' \
+jq -n --arg url 'TARGET_URL' '{url: $url, interval: "daily", change_threshold: 0.5}' \
 | curl -sS -X POST "https://app.snap-render.com/v1/schedules" \
   -H "X-API-Key: $SNAPRENDER_API_KEY" -H "Content-Type: application/json" -d @- | jq .
 ```
 
 - `interval`: `hourly`, `daily` or `weekly` (the free plan has daily and weekly, for one page).
 - `change_threshold`: percent of the page that must change to count as a change (0.5 is a good default).
-- `notify_email: true` emails the account owner when the page changes.
+- `notify_email: true` emails the account owner when the page changes (Business and Scale plans; on other plans leave it out and check the captures or use webhooks).
 - Later, `GET /v1/schedules` lists them and `GET /v1/schedules/ID/captures` shows each capture with the percent changed.
 
 ## Credits left
