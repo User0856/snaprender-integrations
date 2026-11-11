@@ -51,6 +51,7 @@ Add fields to the `jq` object, for example `{url: $url, device: "iphone_15_pro",
 |---|---|---|
 | `device` | `iphone_14`, `iphone_15_pro`, `pixel_7`, `ipad_pro`, `macbook_pro` | desktop 1280x800 |
 | `full_page` | `true` captures the whole scrollable page | `false` |
+| `lazy_load` | `true` with `full_page`: scrolls the page first so lazy-loaded images below the first screen appear (a few seconds slower) | `false` |
 | `dark_mode` | `true` | `false` |
 | `width`, `height` | 320-3840, 200-10000 | 1280, 800 |
 | `format` | `jpeg`, `png`, `webp`, `pdf` (match the file extension) | `jpeg` |
@@ -63,7 +64,7 @@ Add fields to the `jq` object, for example `{url: $url, device: "iphone_15_pro",
 
 Common requests:
 - "on my phone" or "mobile": `device: "iphone_15_pro"`
-- "the whole page": `full_page: true`
+- "the whole page": `full_page: true` (add `lazy_load: true` if images further down come out blank)
 - "desktop vs mobile": run the command twice, once with a `device`, and send both files
 - "as a PDF": `format: "pdf"`, and name the file `.pdf`
 
