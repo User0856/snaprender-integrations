@@ -1,0 +1,43 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "llama-index-tools-snaprender"
+version = "0.1.0"
+description = "LlamaIndex tools for SnapRender: website screenshots the agent can see, and rendered pages as markdown"
+readme = "README.md"
+license = "MIT"
+license-files = ["LICENSE"]
+requires-python = ">=3.9,<4.0"
+authors = [{ name = "SnapRender", email = "support@snap-render.com" }]
+keywords = ["llama-index", "llamaindex", "tools", "agent", "screenshot", "website-screenshot", "web-scraping", "markdown", "snaprender"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "Programming Language :: Python :: 3",
+    "Topic :: Internet :: WWW/HTTP",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+]
+dependencies = [
+    "llama-index-core>=0.13.0,<0.15",
+    "httpx>=0.24",
+]
+
+[project.optional-dependencies]
+test = ["pytest>=7", "pytest-asyncio>=0.23", "respx>=0.21"]
+
+[project.urls]
+Homepage = "https://snap-render.com"
+Documentation = "https://snap-render.com/docs"
+Source = "https://github.com/User0856/snaprender-integrations/tree/main/llamaindex"
+
+[tool.hatch.build.targets.sdist]
+include = ["llama_index/", "README.md", "LICENSE", "tests/"]
+
+[tool.hatch.build.targets.wheel]
+packages = ["llama_index"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"
