@@ -1,0 +1,80 @@
+{
+  "name": "snaprender-ai-sdk",
+  "version": "0.1.0",
+  "description": "Vercel AI SDK tools for SnapRender: let your agent take website screenshots and read rendered pages as markdown",
+  "license": "MIT",
+  "type": "module",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": {
+        "types": "./dist/index.d.ts",
+        "default": "./dist/index.js"
+      },
+      "require": {
+        "types": "./dist/index.d.cts",
+        "default": "./dist/index.cjs"
+      }
+    }
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "sideEffects": false,
+  "keywords": [
+    "ai",
+    "ai-sdk",
+    "vercel-ai-sdk",
+    "ai-sdk-tools",
+    "tools",
+    "agent",
+    "screenshot",
+    "website-screenshot",
+    "web-scraping",
+    "markdown",
+    "snaprender"
+  ],
+  "author": {
+    "name": "SnapRender",
+    "email": "support@snap-render.com"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/User0856/snaprender-integrations.git",
+    "directory": "ai-sdk"
+  },
+  "homepage": "https://snap-render.com",
+  "bugs": {
+    "email": "support@snap-render.com"
+  },
+  "engines": {
+    "node": ">=20.3"
+  },
+  "scripts": {
+    "build": "tsup src/index.ts --format esm,cjs --dts --clean",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:live": "vitest run test/live.test.ts",
+    "prepublishOnly": "npm run typecheck && npm test && npm run build",
+    "example": "tsx examples/basic.ts"
+  },
+  "peerDependencies": {
+    "ai": "^7.0.0",
+    "zod": "^3.25.76 || ^4.1.8"
+  },
+  "devDependencies": {
+    "@ai-sdk/anthropic": "^4.0.102",
+    "@ai-sdk/openai": "^4.0.114",
+    "@types/node": "^22.20.5",
+    "ai": "^7.0.169",
+    "tsup": "^8.5.1",
+    "tsx": "^4.23.15",
+    "typescript": "^5.9.3",
+    "vitest": "^3.2.7",
+    "zod": "^4.6.7"
+  }
+}
