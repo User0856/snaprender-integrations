@@ -1,6 +1,10 @@
-export const VERSION = "0.1.0";
+import { DEFAULT_TRIAL_AGENT, getTrialKey, remintTrialKey, trialNote, type TrialCache, type TrialContext } from "./trial.js";
+
+export const VERSION = "0.2.0";
 export const DEFAULT_BASE_URL = "https://app.snap-render.com";
 export const SIGNUP_URL = "https://app.snap-render.com/auth/signup";
+/** Response header on trial-key responses: `remaining=<n>; claim=<url>`. */
+export const TRIAL_HEADER = "X-SnapRender-Trial";
 
 export interface SnapRenderOptions {
   /** API key. Defaults to the SNAPRENDER_API_KEY environment variable. */
@@ -8,13 +12,18 @@ export interface SnapRenderOptions {
   /**
    * Custom key provider, called once per request when `apiKey` is not set.
    * Use it to read the key from a secret store at call time.
-   *
-   * TODO(agent-trial): when the keyless agent trial key ships
-   * (POST /v1/agent-trial, returns an sk_trial_ key), the default key
-   * resolution in `resolveApiKey` will fall back to minting and caching a
-   * trial key here instead of throwing. Nothing else in the tools changes.
    */
   getApiKey?: () => string | Promise<string>;
+  /**
+   * With no key from `apiKey`, `getApiKey` or SNAPRENDER_API_KEY, use a free
+   * agent trial key (100 watermarked captures over 7 days), minted on first use
+   * and shared through ~/.snaprender/trial.json with other SnapRender tools.
+   * Results then carry a claim link for your human. Set false to throw
+   * MISSING_API_KEY instead. Default true. See https://snap-render.com/docs/agent-trial
+   */
+  trial?: boolean;
+  /** Name sent when minting a trial key, shown on the claim page. Default "snaprender-ai-sdk". */
+  trialAgent?: string;
   /** API base URL. Defaults to https://app.snap-render.com. */
   baseUrl?: string;
   /** Request timeout in milliseconds. Defaults to 90000 (full-page captures can be slow). */
@@ -44,14 +53,44 @@ export class SnapRenderError extends Error {
 }
 
 export async function resolveApiKey(options: SnapRenderOptions): Promise<string> {
+  return (await resolveAuth(options)).apiKey;
+}
+
+interface ResolvedAuth {
+  apiKey: string;
+  /** Set when the key is the shared agent trial key. */
+  trial?: TrialCache;
+}
+
+function configuredKey(options: SnapRenderOptions): Promise<string | undefined> | string | undefined {
   if (options.apiKey) return options.apiKey;
+  const envKey = () => (typeof process !== "undefined" ? process.env?.SNAPRENDER_API_KEY : undefined) || undefined;
   if (options.getApiKey) {
-    const key = await options.getApiKey();
-    if (key) return key;
+    return Promise.resolve(options.getApiKey()).then((key) => key || envKey());
   }
-  const envKey = typeof process !== "undefined" ? process.env?.SNAPRENDER_API_KEY : undefined;
-  if (envKey) return envKey;
-  // TODO(agent-trial): mint a trial key here once POST /v1/agent-trial is live.
+  return envKey();
+}
+
+function trialContext(options: SnapRenderOptions): TrialContext {
+  return {
+    baseUrl: baseUrlOf(options),
+    fetch: options.fetch ?? globalThis.fetch,
+    agent: options.trialAgent || DEFAULT_TRIAL_AGENT,
+    timeoutMs: options.timeoutMs ?? 90_000,
+  };
+}
+
+function baseUrlOf(options: SnapRenderOptions): string {
+  return (options.baseUrl ?? DEFAULT_BASE_URL).replace(/\/+$/, "");
+}
+
+async function resolveAuth(options: SnapRenderOptions): Promise<ResolvedAuth> {
+  const key = await configuredKey(options);
+  if (key) return { apiKey: key };
+  if (options.trial !== false) {
+    const trial = await getTrialKey(trialContext(options));
+    return { apiKey: trial.api_key, trial };
+  }
   throw new SnapRenderError(
     401,
     "MISSING_API_KEY",
@@ -62,6 +101,8 @@ export async function resolveApiKey(options: SnapRenderOptions): Promise<string>
 export interface SnapRenderResponse {
   response: Response;
   bytes: Uint8Array;
+  /** Remaining trial captures and the claim link, for trial keys only. */
+  trialNote?: string;
 }
 
 /** Sends one request and turns non-2xx answers into SnapRenderError with the API's own message. */
@@ -90,30 +131,38 @@ async function requestOnce(
   body: Record<string, unknown>,
   abortSignal?: AbortSignal,
 ): Promise<SnapRenderResponse> {
-  const apiKey = await resolveApiKey(options);
+  const auth = await resolveAuth(options);
   const fetchImpl = options.fetch ?? globalThis.fetch;
-  const baseUrl = (options.baseUrl ?? DEFAULT_BASE_URL).replace(/\/+$/, "");
-  const timeout = AbortSignal.timeout(options.timeoutMs ?? 90_000);
-  const signal = abortSignal ? AbortSignal.any([abortSignal, timeout]) : timeout;
+  const baseUrl = baseUrlOf(options);
 
-  let response: Response;
-  try {
-    response = await fetchImpl(`${baseUrl}${path}`, {
-      method: "POST",
-      headers: {
-        "X-API-Key": apiKey,
-        "Content-Type": "application/json",
-        "User-Agent": `snaprender-ai-sdk/${VERSION}`,
-      },
-      body: JSON.stringify(body),
-      signal,
-    });
-  } catch (error) {
-    if (error instanceof Error && (error.name === "TimeoutError" || error.name === "AbortError")) {
-      if (abortSignal?.aborted) throw error;
-      throw new SnapRenderError(408, "TIMEOUT", `No answer within ${options.timeoutMs ?? 90_000} ms.`);
+  const send = async (apiKey: string): Promise<Response> => {
+    const timeout = AbortSignal.timeout(options.timeoutMs ?? 90_000);
+    const signal = abortSignal ? AbortSignal.any([abortSignal, timeout]) : timeout;
+    try {
+      return await fetchImpl(`${baseUrl}${path}`, {
+        method: "POST",
+        headers: {
+          "X-API-Key": apiKey,
+          "Content-Type": "application/json",
+          "User-Agent": `snaprender-ai-sdk/${VERSION}`,
+        },
+        body: JSON.stringify(body),
+        signal,
+      });
+    } catch (error) {
+      if (error instanceof Error && (error.name === "TimeoutError" || error.name === "AbortError")) {
+        if (abortSignal?.aborted) throw error;
+        throw new SnapRenderError(408, "TIMEOUT", `No answer within ${options.timeoutMs ?? 90_000} ms.`);
+      }
+      throw error;
     }
-    throw error;
+  };
+
+  let response = await send(auth.apiKey);
+  if (auth.trial && response.status === 401 && (await errorCode(response)) === "UNAUTHORIZED") {
+    // The API no longer knows the cached trial key (not TRIAL_EXPIRED, which keeps the key claimable).
+    const fresh = await remintTrialKey(auth.trial, trialContext(options));
+    response = await send(fresh.api_key);
   }
 
   const bytes = new Uint8Array(await response.arrayBuffer());
@@ -137,7 +186,17 @@ async function requestOnce(
       Number.isFinite(retryAfter) && retryAfter > 0 ? retryAfter : undefined,
     );
   }
-  return { response, bytes };
+  const note = trialNote(response.headers.get(TRIAL_HEADER), baseUrl, Boolean(auth.trial));
+  return note ? { response, bytes, trialNote: note } : { response, bytes };
+}
+
+async function errorCode(response: Response): Promise<string | undefined> {
+  try {
+    const parsed = JSON.parse(await response.clone().text()) as { error?: { code?: string } };
+    return parsed.error?.code;
+  } catch {
+    return undefined;
+  }
 }
 
 /** Drops undefined values so the API applies its own defaults. */

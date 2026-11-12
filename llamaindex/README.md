@@ -7,7 +7,7 @@
 
 Both tools have async versions, used automatically by async agents.
 
-The free plan includes 200 captures a month. Get a key at [app.snap-render.com/auth/signup](https://app.snap-render.com/auth/signup).
+The free plan includes 200 captures a month. Get a key at [app.snap-render.com/auth/signup](https://app.snap-render.com/auth/signup), or start with no key at all (see below).
 
 ## Install
 
@@ -15,6 +15,18 @@ The free plan includes 200 captures a month. Get a key at [app.snap-render.com/a
 pip install llama-index-tools-snaprender
 export SNAPRENDER_API_KEY=sk_live_...
 ```
+
+## Try it with no key
+
+If no key is set, the tools start a free agent trial key on the first call: 100 captures over 7 days (up to 30 a day), with a small watermark and lower priority. The key is saved in `~/.snaprender/trial.json` and shared with the other SnapRender tools on the machine (the MCP server and the AI SDK tools), so one trial covers all of them.
+
+While the trial key is in use, each tool result ends with a short note for your human:
+
+```
+Trial key: 97 captures left. Ask your human to claim it at https://app.snap-render.com/dashboard/claim/... to remove the watermark and get 200 free captures a month.
+```
+
+Claiming takes a free account. The same key then keeps working with no watermark, so nothing in your code changes. Pass `trial=False` to turn this off and get a `MISSING_API_KEY` error instead. Details: [snap-render.com/docs/agent-trial](https://snap-render.com/docs/agent-trial).
 
 ## Usage
 
@@ -72,12 +84,16 @@ SnapRenderToolSpec(
     max_image_bytes=5_000_000,
     max_image_dimension=8000,
     get_api_key=None,            # callable returning a key at call time
+    trial=True,                  # with no key, use the shared agent trial key
+    trial_agent=None,            # name shown on the claim page, default "llama-index-tools-snaprender"
 )
 ```
 
 ## Errors
 
 Failed requests raise `SnapRenderError` with `status`, `code` and the API's message, for example `SnapRender 422 TARGET_UNREACHABLE: The target website could not be reached...`. Agents pass the message to the model so it can explain or try another URL. Failed renders do not use a capture. Monthly quota errors are never retried.
+
+Trial keys have their own codes, and their messages already include the claim link: `TRIAL_LIMIT_REACHED` (429, the daily or total trial captures are used), `TRIAL_EXPIRED` (401, claim the key and it works again), `TRIAL_BUSY` (503, the trial lane is busy, try again in a minute) and, when a new trial key cannot be started, `AGENT_TRIAL_LIMIT` (429) or `AGENT_TRIAL_UNAVAILABLE` (503).
 
 The tools cannot reach localhost, private networks or pages behind a login. If a capture of your own site shows a security check page, see [snap-render.com/docs/allow-snaprender](https://snap-render.com/docs/allow-snaprender).
 
@@ -87,11 +103,13 @@ The tools cannot reach localhost, private networks or pages behind a login. If a
 pip install -e ".[test]"
 pytest                                        # unit tests, no network
 SNAPRENDER_TEST_KEY=sk_live_... pytest tests/test_live.py   # live API tests
+SNAPRENDER_LIVE_TRIAL=1 pytest tests/test_trial_live.py     # starts ONE real trial key and makes one capture
 ```
 
 ## Links
 
 - API docs: [snap-render.com/docs](https://snap-render.com/docs)
+- Agent trial: [snap-render.com/docs/agent-trial](https://snap-render.com/docs/agent-trial)
 - MCP server (Claude, Cursor and other MCP clients): [snaprender-mcp](https://www.npmjs.com/package/snaprender-mcp)
 - Support: support@snap-render.com
 

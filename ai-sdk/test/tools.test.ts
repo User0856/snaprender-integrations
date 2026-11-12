@@ -93,12 +93,13 @@ describe("takeScreenshot", () => {
     expect((calls[0].init.headers as Record<string, string>)["X-API-Key"]).toBe("sk_provider");
   });
 
-  it("explains how to get a key when none is set", async () => {
+  it("explains how to get a key when none is set and the trial is off", async () => {
     vi.stubEnv("SNAPRENDER_API_KEY", "");
-    const { fetch } = mockFetch(() => new Response(PNG));
-    await expect(takeScreenshot({ fetch }).execute!({ url: "https://a.test" }, execOptions)).rejects.toThrow(
+    const { fetch, calls } = mockFetch(() => new Response(PNG));
+    await expect(takeScreenshot({ fetch, trial: false }).execute!({ url: "https://a.test" }, execOptions)).rejects.toThrow(
       /SNAPRENDER_API_KEY.*200 captures a month/,
     );
+    expect(calls).toHaveLength(0);
   });
 
   it("surfaces the API error code and message", async () => {

@@ -5,7 +5,7 @@
 - `takeScreenshot`: capture a URL or raw HTML (desktop, phone or tablet, viewport or full page) and send the image to the model.
 - `extractContent`: read a page after JavaScript runs, as markdown, main article text, plain text, links or metadata.
 
-The free plan includes 200 captures a month. Get a key at [app.snap-render.com/auth/signup](https://app.snap-render.com/auth/signup).
+The free plan includes 200 captures a month. Get a key at [app.snap-render.com/auth/signup](https://app.snap-render.com/auth/signup), or start with no key at all (see below).
 
 ## Install
 
@@ -18,6 +18,18 @@ Requires AI SDK 7 (`ai@^7`) and Node.js 20.3 or newer. Set your key:
 ```bash
 export SNAPRENDER_API_KEY=sk_live_...
 ```
+
+## Try it with no key
+
+If no key is set, the tools start a free agent trial key on the first call: 100 captures over 7 days (up to 30 a day), with a small watermark and lower priority. The key is saved in `~/.snaprender/trial.json` and shared with the other SnapRender tools on the machine (the MCP server and the LlamaIndex tools), so one trial covers all of them.
+
+While the trial key is in use, each tool result ends with a short note for your human:
+
+```
+Trial key: 97 captures left. Ask your human to claim it at https://app.snap-render.com/dashboard/claim/... to remove the watermark and get 200 free captures a month.
+```
+
+Claiming takes a free account. The same key then keeps working with no watermark, so nothing in your code changes. Pass `trial: false` to turn this off and get a `MISSING_API_KEY` error instead. Details: [snap-render.com/docs/agent-trial](https://snap-render.com/docs/agent-trial).
 
 ## Quick start
 
@@ -62,7 +74,7 @@ The tools work the same way with `streamText`, `ToolLoopAgent` and any provider 
 }
 ```
 
-The tool's own result (what you get in `steps[].toolResults` and in UI messages) is a JSON object with `source`, `mediaType`, `bytes`, `width`, `height`, `cache`, `remainingCredits` and `image` (base64).
+The tool's own result (what you get in `steps[].toolResults` and in UI messages) is a JSON object with `source`, `mediaType`, `bytes`, `width`, `height`, `cache`, `remainingCredits` and `image` (base64). On a trial key it also has `trialNote`, which is added to the text the model sees.
 
 Captures render at 2x device scale, so a 1280 px wide viewport gives a 2560 px wide image. Very tall full-page captures can be larger than vision models accept. When an image is over `maxImageBytes` (default 5 MB) or `maxImageDimension` (default 8000 px), the tool leaves the image out and tells the model why, so it can try again with `full_page: false` or a smaller viewport.
 
@@ -108,6 +120,8 @@ Every factory (`takeScreenshot`, `extractContent`, `snaprenderTools`) takes the 
 |---|---|---|
 | `apiKey` | `process.env.SNAPRENDER_API_KEY` | Your SnapRender key |
 | `getApiKey` | none | Async function that returns a key at call time (secret stores) |
+| `trial` | `true` | With no key, use the shared agent trial key. `false` throws `MISSING_API_KEY` instead |
+| `trialAgent` | `snaprender-ai-sdk` | Name sent when starting a trial key, shown on the claim page |
 | `baseUrl` | `https://app.snap-render.com` | |
 | `timeoutMs` | `90000` | Per request |
 | `maxRetries` | `1` | Retries after a per-minute rate limit, waiting as long as `Retry-After` says (up to 60 s). Monthly quota errors are never retried |
@@ -118,6 +132,8 @@ Every factory (`takeScreenshot`, `extractContent`, `snaprenderTools`) takes the 
 ## Errors
 
 Failed requests throw `SnapRenderError` with `status`, `code` and the API's message, for example `SnapRender 422 TARGET_UNREACHABLE: The target website could not be reached...`. The AI SDK passes the message to the model as a tool error, so the agent can explain or try another URL. Failed renders do not use a capture.
+
+Trial keys have their own codes, and their messages already include the claim link: `TRIAL_LIMIT_REACHED` (429, the daily or total trial captures are used), `TRIAL_EXPIRED` (401, claim the key and it works again), `TRIAL_BUSY` (503, the trial lane is busy, try again in a minute) and, when a new trial key cannot be started, `AGENT_TRIAL_LIMIT` (429) or `AGENT_TRIAL_UNAVAILABLE` (503).
 
 The tools cannot reach localhost, private networks or pages behind a login. If a capture of your own site shows a security check page, see [snap-render.com/docs/allow-snaprender](https://snap-render.com/docs/allow-snaprender).
 
@@ -137,6 +153,7 @@ SNAPRENDER_API_KEY=sk_live_... ANTHROPIC_API_KEY=sk-ant-... npm run example -- h
 ```bash
 npm test                                   # unit tests, no network
 SNAPRENDER_TEST_KEY=sk_live_... npm run test:live   # live API tests (about 14 captures)
+npm run test:live:trial                    # starts ONE real trial key and makes one capture
 npm run typecheck
 ```
 
@@ -144,6 +161,7 @@ npm run typecheck
 
 - API docs: [snap-render.com/docs](https://snap-render.com/docs)
 - Pricing: [snap-render.com/pricing](https://snap-render.com/pricing)
+- Agent trial: [snap-render.com/docs/agent-trial](https://snap-render.com/docs/agent-trial)
 - MCP server (Claude, Cursor and other MCP clients): [snaprender-mcp](https://www.npmjs.com/package/snaprender-mcp)
 - Support: support@snap-render.com
 

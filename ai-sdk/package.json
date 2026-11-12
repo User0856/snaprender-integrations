@@ -1,6 +1,6 @@
 {
   "name": "snaprender-ai-sdk",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Vercel AI SDK tools for SnapRender: let your agent take website screenshots and read rendered pages as markdown",
   "license": "MIT",
   "type": "module",
@@ -36,7 +36,8 @@
     "website-screenshot",
     "web-scraping",
     "markdown",
-    "snaprender"
+    "snaprender",
+    "agent-trial"
   ],
   "author": {
     "name": "SnapRender",
@@ -59,6 +60,7 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:live": "vitest run test/live.test.ts",
+    "test:live:trial": "SNAPRENDER_LIVE_TRIAL=1 vitest run test/trial.live.test.ts",
     "prepublishOnly": "npm run typecheck && npm test && npm run build",
     "example": "tsx examples/basic.ts"
   },

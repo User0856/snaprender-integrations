@@ -90,6 +90,11 @@ export interface ScreenshotResult {
   image?: string;
   /** Why the image was left out, when it was. */
   note?: string;
+  /**
+   * Trial keys only: captures left and the link where your human claims the
+   * key (removes the watermark, 200 free captures a month). Pass it on.
+   */
+  trialNote?: string;
 }
 
 const MEDIA_TYPES: Record<string, string> = {
@@ -120,7 +125,7 @@ export function takeScreenshot(options: ScreenshotToolOptions = {}): Tool<Screen
         quality: input.quality ?? (format === "png" ? undefined : 80),
         response_type: "binary",
       });
-      const { response, bytes } = await snaprenderRequest(options, "/v1/screenshot", body, abortSignal);
+      const { response, bytes, trialNote } = await snaprenderRequest(options, "/v1/screenshot", body, abortSignal);
 
       const mediaType = response.headers.get("Content-Type")?.split(";")[0] || MEDIA_TYPES[format];
       const size = imageSize(bytes);
@@ -143,6 +148,7 @@ export function takeScreenshot(options: ScreenshotToolOptions = {}): Tool<Screen
       } else {
         result.image = toBase64(bytes);
       }
+      if (trialNote) result.trialNote = trialNote;
       return result;
     },
     toModelOutput: ({ output }) => {
@@ -152,7 +158,8 @@ export function takeScreenshot(options: ScreenshotToolOptions = {}): Tool<Screen
         `, ${output.bytes} bytes, cache ${output.cache}` +
         (output.remainingCredits !== undefined ? `, ${output.remainingCredits} captures left this period` : "") +
         ")." +
-        (output.note ? ` ${output.note}` : "");
+        (output.note ? ` ${output.note}` : "") +
+        (output.trialNote ? `\n${output.trialNote}` : "");
       if (!output.image) return { type: "text", value: summary };
       return {
         type: "content",
@@ -196,6 +203,8 @@ export interface ExtractResult {
   content: unknown;
   wordCount?: number;
   processingTimeMs?: number;
+  /** Trial keys only: captures left and the claim link for your human. */
+  trialNote?: string;
 }
 
 /**
@@ -210,15 +219,18 @@ export function extractContent(options: SnapRenderOptions = {}): Tool<ExtractInp
       "Use it to read pages that plain HTTP fetches get wrong.",
     inputSchema: extractInput,
     execute: async (input, { abortSignal }): Promise<ExtractResult> => {
-      const { bytes } = await snaprenderRequest(options, "/v1/extract", compact({ ...input }), abortSignal);
-      return JSON.parse(new TextDecoder().decode(bytes)) as ExtractResult;
+      const { bytes, trialNote } = await snaprenderRequest(options, "/v1/extract", compact({ ...input }), abortSignal);
+      const result = JSON.parse(new TextDecoder().decode(bytes)) as ExtractResult;
+      if (trialNote) result.trialNote = trialNote;
+      return result;
     },
     toModelOutput: ({ output }) => {
       const content =
         typeof output.content === "string" ? output.content : JSON.stringify(output.content, null, 2);
       const meta = [`type ${output.type}`];
       if (output.wordCount) meta.push(`${output.wordCount} words`);
-      return { type: "text", value: `${content}\n\n---\nSource: ${output.url} (${meta.join(", ")})` };
+      const trial = output.trialNote ? `\n${output.trialNote}` : "";
+      return { type: "text", value: `${content}\n\n---\nSource: ${output.url} (${meta.join(", ")})${trial}` };
     },
   });
 }

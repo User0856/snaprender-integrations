@@ -74,10 +74,10 @@ def test_reads_env_key(monkeypatch):
     assert SnapRenderToolSpec()._key() == "sk_env"
 
 
-def test_missing_key_explains_free_plan(monkeypatch):
+def test_missing_key_explains_free_plan_when_trial_is_off(monkeypatch):
     monkeypatch.delenv("SNAPRENDER_API_KEY", raising=False)
     with pytest.raises(SnapRenderError, match="200 captures a month"):
-        SnapRenderToolSpec()._key()
+        SnapRenderToolSpec(trial=False)._key()
 
 
 def test_get_api_key_callable(monkeypatch):
